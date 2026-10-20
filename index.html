@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen de novedades</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --text:#1d2330; --muted:#5d6676; --line:#dfe3ea;
+  --accent:#1f4e8c; --accent-soft:#e7eef8;
+  --ok:#1e7a3c; --ok-bg:#e3f4e8; --pend:#b3261e; --pend-bg:#fbe5e3; --info:#5b6270; --info-bg:#eceef2;
+  --rep:#8a6100; --rep-bg:#fff1c2; --rep-line:#e0a800;
+  --inc:#5b3fa8; --inc-bg:#ece6fb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181e; --panel:#1d2129; --text:#e7eaf0; --muted:#9aa3b2; --line:#30363f;
+    --accent:#7fa8e0; --accent-soft:#233148;
+    --ok:#6fcf8d; --ok-bg:#183323; --pend:#f08a80; --pend-bg:#3a1d1b; --info:#b5bcc8; --info-bg:#2a2f38;
+    --rep:#f2c94c; --rep-bg:#3a3012; --rep-line:#d9a90f;
+    --inc:#b9a5f0; --inc-bg:#2b2440;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181e; --panel:#1d2129; --text:#e7eaf0; --muted:#9aa3b2; --line:#30363f;
+  --accent:#7fa8e0; --accent-soft:#233148;
+  --ok:#6fcf8d; --ok-bg:#183323; --pend:#f08a80; --pend-bg:#3a1d1b; --info:#b5bcc8; --info-bg:#2a2f38;
+  --rep:#f2c94c; --rep-bg:#3a3012; --rep-line:#d9a90f;
+  --inc:#b9a5f0; --inc-bg:#2b2440;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px}
+header h1{margin:0;font-size:20px}
+header .sub{color:var(--muted);font-size:13px;margin-top:2px}
+.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.barra label{font-size:13px;color:var(--muted)}
+input[type=text],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+nav{display:flex;gap:4px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:0;background:none;color:var(--muted);font:inherit;padding:10px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button.activa{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1400px;margin:0 auto}
+.solapa{display:none}.solapa.activa{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.panel h2{margin:0 0 8px;font-size:16px}
+.nota{color:var(--muted);font-size:13px}
+.zona{border:2px dashed var(--line);border-radius:10px;padding:26px;text-align:center;cursor:pointer;color:var(--muted)}
+.zona.encima{border-color:var(--accent);background:var(--accent-soft)}
+button.btn{font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
+button.btn.sec{background:var(--panel);color:var(--accent)}
+button.btn:disabled{opacity:.5;cursor:default}
+button.link{border:0;background:none;color:var(--accent);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--bg);position:sticky;top:0}
+.tabla{overflow-x:auto}
+.estado{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.e-solucionado{background:var(--ok-bg);color:var(--ok)}
+.e-pendiente{background:var(--pend-bg);color:var(--pend)}
+.e-informativo{background:var(--info-bg);color:var(--info)}
+.e-repeticion{background:var(--rep-bg);color:var(--rep)}
+.e-incompleto{background:var(--inc-bg);color:var(--inc)}
+tr.f-incompleto td:first-child{box-shadow:inset 4px 0 0 var(--inc)}
+.tarjeta.ic .n{color:var(--inc)}
+.verif{margin-top:6px;font-size:12px}
+.verif select{font-size:12px;max-width:190px}
+.marca{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600}
+.marca.si{color:var(--ok)} .marca.no{color:var(--muted);font-weight:400}
+.tarjeta.sv .n{color:var(--accent)}
+tr.f-repeticion td:first-child{box-shadow:inset 4px 0 0 var(--rep-line)}
+tr.f-repeticion td{background:color-mix(in srgb, var(--rep-bg) 45%, transparent)}
+.tarjeta.re .n{color:var(--rep)}
+.fotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.fotos img{height:90px;border:1px solid var(--line);border-radius:4px}
+tr.f-solucionado td:first-child{box-shadow:inset 4px 0 0 var(--ok)}
+tr.f-pendiente td:first-child{box-shadow:inset 4px 0 0 var(--pend)}
+tr.f-informativo td:first-child{box-shadow:inset 4px 0 0 var(--info)}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tarjeta{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tarjeta .n{font-size:26px;font-weight:700}
+.tarjeta .t{color:var(--muted);font-size:12px}
+.tarjeta.ok .n{color:var(--ok)}.tarjeta.pe .n{color:var(--pend)}.tarjeta.in .n{color:var(--info)}
+.detalle td{background:var(--bg)}
+.ocurr{border-left:3px solid var(--line);padding:4px 0 4px 10px;margin:6px 0}
+pre.orig{white-space:pre-wrap;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px;max-height:260px;overflow:auto}
+.filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.aviso{background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px}
+.err{color:var(--pend)}
+.chk{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0}
+small.mut{color:var(--muted)}
+@media (max-width:700px){main{padding:10px}.zona{padding:16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Resumen de novedades</h1>
+  <div class="sub">Lee los partes e informes diarios en PDF (turno día y noche) y resume las novedades con su estado.</div>
+  <div class="barra">
+    <label for="barrio">Barrio / Objetivo (opcional)</label>
+    <input type="text" id="barrio" placeholder="Ej.: nombre del barrio" size="28">
+    <span class="nota" id="periodoTxt"></span>
+  </div>
+</header>
+<nav>
+  <button data-s="s1" class="activa">1 · Informes cargados</button>
+  <button data-s="s2">2 · Resumen de novedades</button>
+  <button data-s="s3">3 · Descargas</button>
+</nav>
+<main>
+<section id="s1" class="solapa activa">
+  <div class="panel">
+    <h2>Cargar informes en PDF</h2>
+    <div class="zona" id="zona">Arrastrá acá los PDF o hacé clic para elegirlos.<br><small class="mut">Podés cargar uno, varios días o un mes entero, de día y de noche. Nada se guarda: al cerrar la página se pierde todo.</small></div>
+    <input type="file" id="archivo" accept="application/pdf,.pdf" multiple hidden>
+    <div id="progreso" class="nota" style="margin-top:8px"></div>
+  </div>
+  <div class="panel">
+    <h2>Informes leídos</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Archivo</th><th>Formato</th><th>Origen</th><th>Fecha</th><th>Turno</th><th>Novedades</th><th></th></tr></thead>
+      <tbody id="tInformes"><tr><td colspan="7" class="nota">Todavía no hay informes.</td></tr></tbody>
+    </table></div>
+    <div id="huecos" class="nota" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<section id="s2" class="solapa">
+  <div id="avisoUno" class="aviso" style="display:none"></div>
+  <div class="tarjetas" id="tarjetas"></div>
+  <div class="panel">
+    <div class="filtros">
+      <label>Estado <select id="fEstado"><option value="">Todos</option><option value="repeticion">Repeticiones</option><option value="pendiente">Pendientes</option><option value="incompleto">Incompletas (falta información)</option><option value="solucionado">Solucionadas</option><option value="informativo">Informativas</option></select></label>
+      <label>Origen <select id="fOrigen"><option value="">Todos</option></select></label>
+      <label>Turno <select id="fTurno"><option value="">Ambos</option><option>Día</option><option>Noche</option></select></label>
+      <label>Buscar <input type="text" id="fTexto" placeholder="lugar, tipo, palabra…"></label>
+      <label>Verificación <select id="fVerif"><option value="">Todas</option><option value="no">Sin verificar</option><option value="si">Verificadas</option></select></label>
+      <label><input type="checkbox" id="fPendPrimero"> Repeticiones y pendientes primero</label>
+    </div>
+    <div class="tabla"><table>
+      <thead><tr><th>Fecha</th><th>Turno</th><th>Hora</th><th>Origen</th><th>Tipo</th><th>Lugar</th><th>Novedad</th><th>Estado</th><th>Seguimiento</th><th></th></tr></thead>
+      <tbody id="tResumen"></tbody>
+    </table></div>
+    <p class="nota"><b>Verificación manual</b>: después de revisar el detalle, confirmá el estado sugerido o cambialo; queda marcado con ✓, la hora y el estado que sugería la página, y sale así en las descargas (al cerrar la página se pierde). <b>Incompleto</b> (violeta): el control lista puntos pero no dice en qué estado están. <b>Repetición</b> (amarillo): el mismo evento aparece en dos o más informes sin que se haya solucionado en el medio (coincide el texto o las fotos; en los controles, se repite el mismo hallazgo). El estado lo sugiere la página leyendo el texto. Si no coincide, cambialo con el selector de la fila (queda marcado como "a mano"). Un pendiente pasa a solucionado si un informe posterior muestra la solución, por ejemplo un control sin hallazgos o la entrega de un objeto encontrado.</p>
+  </div>
+</section>
+
+<section id="s3" class="solapa">
+  <div class="panel">
+    <h2>Descargar el resumen</h2>
+    <p class="nota">Las descargas llevan sólo el resumen de cada novedad (sin los textos originales de los informes).</p>
+    <div class="chk">
+      <label><input type="checkbox" id="dRep" checked> Repeticiones</label>
+      <label><input type="checkbox" id="dPend" checked> Pendientes</label>
+      <label><input type="checkbox" id="dInc" checked> Incompletas</label>
+      <label><input type="checkbox" id="dSol" checked> Solucionadas</label>
+      <label><input type="checkbox" id="dInf" checked> Informativas</label>
+      <label><input type="checkbox" id="dOcurr" checked> Incluir el detalle por informe (Excel)</label>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="bXlsx">Descargar Excel</button>
+      <button class="btn" id="bPdf">Descargar PDF</button>
+    </div>
+    <div id="msgDesc" class="nota" style="margin-top:8px"></div>
+  </div>
+</section>
+</main>
+
+<script>
+/* ===================== Estado general ===================== */
+const ESTADOS = {repeticion:'Repetición', pendiente:'Pendiente', incompleto:'Incompleto', solucionado:'Solucionado', informativo:'Informativo'};
+const S = { informes: [], manual: {}, notas: {}, abiertos: new Set() };
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const $ = id => document.getElementById(id);
+const norm = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaISO(d,m,a){ return `${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function fmtF(iso){ if(!iso) return ''; const [a,m,d]=iso.split('-'); return `${d}/${m}/${a}`; }
+function fmtCorta(iso){ if(!iso) return ''; const [a,m,d]=iso.split('-'); return `${d}/${m}`; }
+function diaSig(iso){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+function ordenTurno(iso, turno){ return Date.parse(iso+'T00:00:00Z')/864e5*2 + (turno==='Noche'?1:0); }
+function cortar(t, n=170){ t=(t||'').replace(/\s+/g,' ').trim(); if(t.length<=n) return t; const c=t.slice(0,n); return c.slice(0, Math.max(c.lastIndexOf(' '), n-20)).replace(/[,;:]$/,'')+'…'; }
+
+/* ===================== Lectura del PDF ===================== */
+async function leerPdf(buf){
+  const doc = await pdfjsLib.getDocument({data: buf, isOffscreenCanvasSupported:false}).promise;
+  const paginas = [], imagenes = [];
+  for (let p=1; p<=doc.numPages; p++){
+    const pg = await doc.getPage(p);
+    const tc = await pg.getTextContent();
+    const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({
+      p, x: it.transform[4], y: it.transform[5], w: it.width || 0,
+      h: Math.abs(it.transform[3]) || it.height || 10, s: it.str.replace(/\s+/g,' ').trim()
+    }));
+    paginas.push(items);
+    try { imagenes.push(...await imagenesPagina(pg, p)); } catch(e){ console.warn('imágenes p'+p, e); }
+  }
+  paginas.imagenes = imagenes;
+  return paginas;
+}
+// Fotos de la página: posición, huella (dHash de 64 bits) y miniatura para mostrar en pantalla
+async function imagenesPagina(pg, p){
+  const O = pdfjsLib.OPS, ops = await pg.getOperatorList();
+  const mul = (m,n) => [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
+  let ctm = [1,0,0,1,0,0]; const pila = [], out = [];
+  for (let i=0; i<ops.fnArray.length; i++){
+    const fn = ops.fnArray[i], a = ops.argsArray[i];
+    if (fn === O.save) pila.push(ctm.slice());
+    else if (fn === O.restore) ctm = pila.pop() || [1,0,0,1,0,0];
+    else if (fn === O.transform) ctm = mul(ctm, a);
+    else if (fn === O.paintImageXObject || fn === O.paintJpegXObject){
+      const w = a[1], h = a[2];
+      if (!w || !h || w*h < 60000 || Math.min(w,h) < 150) continue;   // descarta íconos, líneas y logos chicos
+      const ys = [ctm[5], ctm[5]+ctm[3], ctm[5]+ctm[1], ctm[5]+ctm[1]+ctm[3]];
+      out.push({id:a[0], p, yTop: Math.max(...ys), wPdf: Math.abs(ctm[0])+Math.abs(ctm[2])});
+    }
+  }
+  const res = [];
+  for (const im of out){
+    if (im.wPdf < 60) continue;
+    const obj = await new Promise(r => { const t = setTimeout(()=>r(null), 4000);
+      (String(im.id).startsWith('g_') ? pg.commonObjs : pg.objs).get(im.id, o => { clearTimeout(t); r(o); }); });
+    const lienzo = aLienzo(obj);
+    if (!lienzo) continue;
+    res.push({p: im.p, y: im.yTop, hash: dHash(lienzo), mini: miniatura(lienzo)});
+  }
+  return res;
+}
+function aLienzo(obj){
+  if (!obj) return null;
+  const c = document.createElement('canvas');
+  if (obj.bitmap){ c.width = obj.bitmap.width; c.height = obj.bitmap.height; c.getContext('2d').drawImage(obj.bitmap, 0, 0); return c; }
+  if (!obj.data || !obj.width) return null;
+  const {width:w, height:h, data:d, kind} = obj;
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d'), id = ctx.createImageData(w, h), o = id.data;
+  if (kind === 3) o.set(d.subarray ? d.subarray(0, w*h*4) : d.slice(0, w*h*4));
+  else if (kind === 2) for (let i=0, j=0; i<w*h; i++, j+=3){ o[i*4]=d[j]; o[i*4+1]=d[j+1]; o[i*4+2]=d[j+2]; o[i*4+3]=255; }
+  else if (kind === 1){ const fila = (w+7)>>3; for (let y=0; y<h; y++) for (let x=0; x<w; x++){ const v = (d[y*fila+(x>>3)] >> (7-(x&7))) & 1 ? 255 : 0; const k=(y*w+x)*4; o[k]=o[k+1]=o[k+2]=v; o[k+3]=255; } }
+  else return null;
+  ctx.putImageData(id, 0, 0);
+  return c;
+}
+function dHash(c){
+  const t = document.createElement('canvas'); t.width = 9; t.height = 8;
+  const x = t.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, 9, 8);
+  const d = x.getImageData(0, 0, 9, 8).data; let bits = '';
+  const g = i => d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114;
+  for (let y=0; y<8; y++) for (let k=0; k<8; k++) bits += g(y*9+k) > g(y*9+k+1) ? '1' : '0';
+  return bits;
+}
+function miniatura(c){
+  const esc = Math.min(1, 150 / Math.max(c.width, c.height));
+  const t = document.createElement('canvas'); t.width = Math.round(c.width*esc); t.height = Math.round(c.height*esc);
+  t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+  return t.toDataURL('image/jpeg', 0.7);
+}
+function distHash(a, b){ let n=0; for (let i=0; i<64; i++) if (a[i] !== b[i]) n++; return n; }
+// Agrupa ítems en renglones (misma altura) y los une de izquierda a derecha
+function armarLineas(items, tol=2.6){
+  const ord = items.slice().sort((a,b)=> b.y-a.y || a.x-b.x);
+  const lineas = [];
+  for (const it of ord){
+    const l = lineas.length ? lineas[lineas.length-1] : null;
+    if (l && Math.abs(l.y - it.y) <= tol) l.items.push(it); else lineas.push({y: it.y, p: it.p, items:[it]});
+  }
+  for (const l of lineas){
+    l.items.sort((a,b)=>a.x-b.x);
+    let t=''; let prev=null;
+    for (const it of l.items){
+      if (prev && it.x - (prev.x+prev.w) > 1.2) t += ' ';
+      t += it.s; prev = it;
+    }
+    l.t = t.replace(/\s+/g,' ').trim(); l.x = l.items[0].x;
+  }
+  return lineas;
+}
+
+/* ===================== Datos personales fuera del resumen ===================== */
+function limpiar(t){
+  const NOMBRE = "(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-záéíóúñüÁÉÍÓÚÑÜ'\\-]+";
+  const NOMBRES = `(?:${NOMBRE},?\\s*){1,6}`;
+  const art = a => ({el:'', la:'', al:'a ', del:'de '})[(a||'').trim().toLowerCase()] || '';
+  t = (t||'').replace(/\s+/g,' ');
+  t = t.replace(/^\s*siendo las \d{1,2}[:.]\d{2}\s*(hs\.?|horas)?\s*,?\s*/i,'');
+  t = t.replace(/^\s*siendo la hora indicada\s*,?\s*(se informa (que )?)?/i,'');
+  // documentos, legajos, dominios y teléfonos
+  t = t.replace(/,?\s*\(?\s*D\.?\s?N\.?\s?I\.?\s*(N\s*[°º.]*\s*)?:?\s*[\d.]{6,}\s*\)?/gi,'');
+  t = t.replace(/,?\s*(leg\.?|legajo)\s*(N\s*[°º.]*)?\s*:?\s*\d{3,}/gi,'');
+  t = t.replace(/,?\s*dominio\s+[A-Z0-9]{5,8}/gi,'');
+  t = t.replace(/\b\d{8,}\b/g,'');
+  // nombres: después de Sr./Sra., de un rol o de "como"
+  t = t.replace(new RegExp(`\\b((?:el|la|al|del)\\s+)?(?:Sr|Sra|Srta|Sres)\\.?\\s+${NOMBRES}`, 'g'), (m, a) => ` ${art(a)}una persona `);
+  t = t.replace(/\b(Op|Vig|Ref)\.\s+/g, m => m.replace('.', ''));
+  t = t.replace(new RegExp(`\\b(vigilador|vigiladora|Vig|Op|operador|operadora|efectivo PolAD|efectivo|personal)\\s+${NOMBRES}`, 'g'), (m, r) => r.replace(/^Vig$/,'vigilador').replace(/^Op$/,'operador') + ' ');
+  t = t.replace(new RegExp(`\\b(propietari[oa]|inquilin[oa]|conductor|invitad[oa])\\s+${NOMBRES}`, 'g'), '$1 ');
+  t = t.replace(new RegExp(`\\b(identificad[oa] como|como)\\s+${NOMBRES}`, 'g'), '$1 una persona ');
+  // "APELLIDO, NOMBRE" en mayúsculas
+  t = t.replace(/\b[A-ZÁÉÍÓÚÑÜ]{2,}(?:\s+[A-ZÁÉÍÓÚÑÜ]{2,}){0,2},\s*[A-ZÁÉÍÓÚÑÜ]{2,}(?:\s+[A-ZÁÉÍÓÚÑÜ]{2,}){0,3}\b/g, 'una persona');
+  t = t.replace(/(una persona\s*)+/g, 'una persona ').replace(/\b(El|el|La|la) una persona/g, 'una persona');
+  t = t.replace(/\s+,/g,',').replace(/,\s*,/g,',').replace(/\s+\./g,'.').replace(/\s{2,}/g,' ').replace(/^[\s,.;]+/,'').trim();
+  return cap(t);
+}
+function primeraOracion(t){ const m=(t||'').replace(/\s+/g,' ').match(/^(.+?\.)(\s|$)/); return m?m[1]:(t||''); }
+
+/* ===================== Clasificación ===================== */
+const TIPOS = [
+  ['Devolución de objeto', /(olvid|extravi|perdi[oó]|reclama).{0,120}(campera|prenda|objeto|elemento|celular|tel[eé]fono|billetera|llave|mochila|bolso|cartera|documento|anteojo|reloj|bicicleta)|entrega (de la prenda|del elemento|del objeto)/i],
+  ['Hallazgo de objeto', /encontr(ad|ó|o)|hallazgo de (un|una)|hall[oó] (un|una)/i],
+  ['Falla de Face ID', /face ?id|reconocimiento facial/i],
+  ['Ingreso con drones / filmación', /dron|filmaci[oó]n/i],
+  ['Abertura en vivienda', /(puerta|ventana|ventanal|port[oó]n|abertura)[^.]{0,60}(abiert|abertura)|(abiert|abertura)[^.]{0,40}(puerta|ventana|ventanal|port[oó]n)/i],
+  ['Alarma', /alarma/i],
+  ['Incendio / humo', /incendi|humo|fuego/i],
+  ['Accidente / asistencia médica', /accident|lesi[oó]n|herid|ambulancia|\bSAME\b|asistencia m[eé]dica/i],
+  ['Personal / ausencia', /no se present[oó]|ausente|ausencia|\bA\.?S\.?A\b/i],
+  ['Hurto / intrusión', /hurto|robo|sustra|intrus|ingreso no autorizado|merode|sospechos|ingresando al per[ií]metro|masculinos/i],
+  ['Mantenimiento / limpieza', /limpieza|mantenimiento|reparaci[oó]n de|t[eé]cnico/i],
+  ['Animal suelto', /perro|caballo|animal|v[ií]bora|equino suelto/i],
+  ['Ruidos molestos', /ruido|m[uú]sica alta|\bfiestas?\b/i],
+  ['Tránsito / velocidad', /velocidad|exceso|choque|colisi|tr[aá]nsito/i],
+  ['Falla eléctrica / luminaria', /corte de (luz|energ)|luminari|sin luz|apagad/i],
+  ['Falla de sistema / cámaras', /c[aá]mara|sistema|barrera|molinete|lector/i],
+  ['Reclamo / conflicto', /reclam|discusi|altercad|conflict|queja/i],
+  ['Ingreso / acceso', /ingres|acceso|invitad|proveedor/i],
+];
+function clasificar(t){ for (const [tipo,re] of TIPOS) if (re.test(t)) return tipo; return 'Otra novedad'; }
+
+const RE_SOL = /panorama normal|se (realiza|efect[uú]a|hace) (la )?entrega|entregad[oa] a su|queda(n)? (cerrad|trabad)|normaliz|se soluciona|solucionad|restablec|se resuelve|resuelt|sin novedad|repar(ad|ó)|funcionando correctamente/i;
+const RE_PEND = /bajo resguardo|pendiente|a la espera|se aguarda|no se logra|sin respuesta|a disposici[oó]n|persiste|contin[uú]a|fuera de servicio|no funciona|sin soluci[oó]n|se reitera|err[oó]ne|falla/i;
+const RE_INFO = /registro informativo|se deja constancia|se deja registro|a modo informativo|informativ/i;
+
+function estadoTexto(resultado, todo){
+  const r = resultado || '';
+  const base = r || todo || '';
+  if (RE_PEND.test(r)) return {e:'pendiente', m: oracionCon(r, RE_PEND)};
+  if (RE_SOL.test(r)) return {e:'solucionado', m: oracionCon(r, RE_SOL)};
+  if (RE_INFO.test(base)) return {e:'informativo', m: oracionCon(base, RE_INFO)};
+  if (!r && RE_PEND.test(todo||'')) return {e:'pendiente', m:''};
+  if (!r && RE_SOL.test(todo||'')) return {e:'solucionado', m: oracionCon(todo, RE_SOL)};
+  return {e:'pendiente', m: r ? '' : 'El informe no indica resultado'};
+}
+function oracionCon(t, re){
+  const or = (t||'').replace(/\s+/g,' ').split(/(?<=\.)\s+/);
+  const o = or.find(x => re.test(x)) || or[0] || '';
+  return cortar(limpiar(o.replace(/^A las \d{1,2}[:.]\d{2}\s*(hs\.?)?\s*,?\s*/i,'')), 140);
+}
+
+/* ===================== Formato 1: parte diario con novedades numeradas ===================== */
+function leerParte(paginas, archivo){
+  const lineas = paginas.flatMap(items => armarLineas(items));
+  const todo = lineas.map(l=>l.t).join('\n');
+  let fecha=null, turno=null;
+  const mh = todo.match(/PARTE\s+DIARIO\s+(NOCTURNO|DIURNO|NOCHE|D[IÍ]A)?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+  if (mh){ fecha = fechaISO(mh[2],mh[3],mh[4]); if (mh[1]) turno = /noc|noche/i.test(mh[1]) ? 'Noche' : 'Día'; }
+  if (!turno) turno = turnoPorNombre(archivo) || (/NOVEDADES NOCTURNAS/i.test(todo) ? 'Noche' : (/NOVEDADES DIURNAS/i.test(todo) ? 'Día' : null));
+  const idxFecha = [];
+  lineas.forEach((l,i) => { if (/^Fecha\s*:\s*\d{1,2}\/\d{1,2}\/\d{4}/i.test(l.t)) idxFecha.push(i); });
+  const bloques = [];
+  for (let k=0; k<idxFecha.length; k++){
+    const i = idxFecha[k];
+    let ti = i-1; while (ti>=0 && (!/[A-Za-zÁÉÍÓÚ]{3}/.test(lineas[ti].t) || /^\|$/.test(lineas[ti].t))) ti--;
+    bloques.push({ti, i});
+  }
+  const novedades = [];
+  bloques.forEach((b,k) => {
+    const fin = k+1 < bloques.length ? bloques[k+1].ti : lineas.length;
+    const titulo = b.ti>=0 ? lineas[b.ti].t : 'Novedad';
+    const campos = {fecha:'', hora:'', lugar:'', desarrollo:'', acciones:'', resultado:'', observacion:''};
+    let actual = null; const crudo = [titulo]; let corte = fin;
+    for (let j=b.i; j<fin; j++){
+      const t = lineas[j].t;
+      if (/^(Tango|Bravo|Alfa|Charlie|Delta)\s+\w*\s*:|^TAREAS DE RONDINES|^Recorrido\b/i.test(t)) { corte = j; break; }
+      if (t === '|' || t === '.') continue;
+      crudo.push(t);
+      let m;
+      if ((m = t.match(/^Fecha\s*:\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i))) { campos.fecha = fechaISO(m[1],m[2],m[3]); actual=null; continue; }
+      if ((m = t.match(/^Hora\s*:\s*(\d{1,2})[:.](\d{2})/i))) { campos.hora = m[1].padStart(2,'0')+':'+m[2]; actual=null; continue; }
+      if ((m = t.match(/^Lugar\s*:\s*(.*)$/i))) { campos.lugar = m[1]; actual='lugar'; continue; }
+      if ((m = t.match(/^Desarrollo\s*:?\s*(.*)$/i))) { actual='desarrollo'; campos.desarrollo += m[1]; continue; }
+      if ((m = t.match(/^Acciones( tomadas)?\s*:?\s*(.*)$/i))) { actual='acciones'; campos.acciones += m[2]; continue; }
+      if ((m = t.match(/^Resultado( final)?\s*:?\s*(.*)$/i))) { actual='resultado'; campos.resultado += m[2]; continue; }
+      if ((m = t.match(/^Observaci[oó]n(es)?\s*:?\s*(.*)$/i))) { actual='observacion'; campos.observacion += m[2]; continue; }
+      if (/^GS\s*:/i.test(t)) { actual='gs'; continue; }
+      if (actual==='gs') { actual=null; continue; }
+      if (actual==='lugar') { campos.lugar += ' '+t; continue; }
+      if (actual) campos[actual] += ' '+t;
+    }
+    const posL = l => l.p*1e4 + (1e4 - l.y);
+    const desde = b.ti >= 0 ? posL(lineas[b.ti]) : -Infinity, hasta = corte < lineas.length ? posL(lineas[corte]) : Infinity;
+    const imgs = (paginas.imagenes||[]).filter(im => { const k = im.p*1e4 + (1e4 - im.y); return k > desde && k < hasta; });
+    const nro = (titulo.match(/N(?:ro|°|º)\.?\s*(\d+)/i)||[])[1] || '';
+    const textoTodo = [titulo, campos.desarrollo, campos.observacion, campos.acciones].join(' ');
+    const tipo = /INFORME DE NOVEDAD/i.test(titulo) ? clasificar(textoTodo) : (clasificar(titulo + ' ' + campos.observacion + ' ' + campos.desarrollo) === 'Otra novedad' ? cap(titulo.toLowerCase()) : clasificar(titulo + ' ' + campos.observacion + ' ' + campos.desarrollo));
+    const est = tipo==='Ingreso con drones / filmación' && !RE_PEND.test(campos.resultado) ? {e:'informativo', m: oracionCon(campos.resultado || campos.acciones, /.*/)} : estadoTexto(campos.resultado, campos.observacion + ' ' + campos.acciones);
+    const res = resumenParte(tipo, campos);
+    novedades.push({
+      ref: nro ? `Novedad Nro ${nro}` : cap(titulo.toLowerCase()),
+      fechaEvento: campos.fecha || fecha, hora: campos.hora,
+      tipo, lugar: limpiar(campos.lugar.replace(/\s*[–-]\s*/g,' – ')),
+      detalle: res.texto, objeto: res.objeto,
+      estado: est.e, motivo: est.m,
+      clave: claveParte(tipo, campos, nro, fecha, turno),
+      original: crudo.join('\n'), imgs
+    });
+  });
+  // fotos que aparecen en 3 o más novedades del mismo parte son membretes o firmas: no cuentan
+  const usos = new Map();
+  novedades.forEach((n,i) => n.imgs.forEach(im => { const k = [...usos.keys()].find(h => distHash(h, im.hash) <= 4) || im.hash; usos.set(k, (usos.get(k)||new Set()).add(i)); }));
+  const decor = [...usos.entries()].filter(([,v]) => v.size >= 3).map(([h]) => h);
+  novedades.forEach(n => n.imgs = n.imgs.filter(im => !decor.some(h => distHash(h, im.hash) <= 4)));
+  return {formato:'Parte diario', origen:'Parte diario', fecha, turno, novedades, controles:[]};
+}
+function resumenParte(tipo, c){
+  const d = (c.desarrollo||'').replace(/\s+/g,' ');
+  let m;
+  if (tipo==='Hallazgo de objeto' && (m = d.match(/encontrad[oa]s?\s+(?:(?:una?|unos|unas)\s+)?(.+?)(?:,?\s+en\s+(?:uno de\s+)?(?:los|las|el|la)?\s*([^.]+?))?\./i))){
+    const obj = m[1].replace(/,\s*$/,'');
+    return {texto: `Se encuentra ${obj}${m[2]?' ('+m[2]+')':''}`, objeto: norm(obj).split(' ')[0]};
+  }
+  if (tipo==='Devolución de objeto' && (m = d.match(/(?:olvidad|extraviad|perdid)[oa]s?\s+(?:(?:una?|unos|unas)\s+)?(.+?)(?:\s+en\s+(?:el|la)?\s*([^.,]+))?[.,]/i))){
+    return {texto: `Se entrega a su dueño ${m[1]} olvidad${/a$/.test(m[1].split(' ')[0])?'a':'o'}${m[2]?' en '+m[2]:''}`, objeto: norm(m[1]).split(' ')[0]};
+  }
+  if (tipo==='Falla de Face ID'){
+    return {texto: 'El sistema asigna a una persona el reconocimiento facial de otra (coincidencia incorrecta)', objeto:''};
+  }
+  if (tipo==='Ingreso con drones / filmación'){
+    const dron = /dron/i.test(d);
+    const adm = /administraci[oó]n/i.test(c.acciones||'');
+    return {texto: `Ingreso de invitado con equipo de filmación${dron?' (incluye drones)':''}${adm?'; se le indica pedir autorización en Administración':''}`, objeto:''};
+  }
+  if ((m = d.match(/consistente en\s+([^.]+)\./i))) return {texto: cap(limpiar(m[1])), objeto:''};
+  return {texto: cortar(limpiar(primeraOracion(d || c.observacion)), 170), objeto:''};
+}
+function claveParte(tipo, c, nro, fecha, turno){
+  if (['Hallazgo de objeto','Devolución de objeto','Ingreso con drones / filmación','Ingreso / acceso','Otra novedad'].includes(tipo))
+    return `u|${fecha}|${turno}|${nro}|${norm(c.hora)}`;
+  return `t|${norm(tipo)}|${norm(c.lugar)}`;
+}
+function turnoPorNombre(n){
+  n = norm(n);
+  if (/noct|noche|(^|[^a-z])tn([^a-z]|$)/.test(n)) return 'Noche';
+  if (/diurn|(^|[^a-z])dia([^a-z]|$)|\btm\b|\btd\b|[_ .-]t[md][_ .-]/.test(n)) return 'Día';
+  return null;
+}
+
+/* ===================== Formato 2: informe diario en planilla ===================== */
+const SECCIONES = [
+  ['crono', /^CRONOL[OÓ]GICO\b|INFORMADO AL\b/], ['controles', /^CONTROLES\b/], ['relevo', /^RELEVOS?\b/],
+  ['aliara', /^ALIARA\b/], ['gps', /^Control De GPS/i], ['recorrido', /^RECORRIDO PERIMETRAL\b/],
+  ['rondin', /^ROND[IÍ]N\b/], ['camaras', /^C[AÁ]MARAS\b/], ['fin', /ES TODO CUANTO/i]
+];
+const RE_RUTINA = /toma (el )?servicio|se entrega (la )?guardia|finaliza(mos)? (el )?servicio|^ingresa\b|cierre de portones|apertura de portones|cambios? de puestos?|^relevo|sin novedad/i;
+// controles que tienen que decir en qué estado está cada cosa (si no lo dicen, falta información)
+const RE_PIDE_ESTADO = /luminar|luces|port[oó]n|c[aá]mara|alarma|barrera|molinete|reflector|bomba|generador/i;
+const RE_OK = /funcionan|funcionando|funciona\b|operativ|en condiciones|encendid|prendid|sin novedad|correct|cerrad|con candado|\bok\b|normal/i;
+const RE_ANOM = /pozo|pa[ñn]os? (de )?tejido|levantad|inclinad|apagad|\brot[oa]s?\b|sin candado|abiert[oa]s?|falla|no funciona|fuera de servicio|da[ñn]ad|cortad|faltan|averiad|ca[ií]d[oa]|quemad|rotura|pérdida|perdida de agua|filtraci/i;
+
+function leerPlanilla(paginas, archivo){
+  // Ubicar secciones en orden de lectura
+  const marcas = [];
+  paginas.forEach((items, pi) => {
+    for (const l of armarLineas(items)) for (const [id,re] of SECCIONES) if (re.test(l.t)) { marcas.push({id, p:pi, y:l.y}); break; }
+  });
+  const seccionDe = it => {
+    let s = 'cabecera';
+    for (const m of marcas) if (m.p < it.p-1 || (m.p === it.p-1 && m.y >= it.y - 1)) s = m.id;
+    return s;
+  };
+  const todos = paginas.flat();
+  todos.forEach(it => it.sec = seccionDe(it));
+  // Cabecera: fecha y turno
+  const cab = armarLineas(todos.filter(i=>i.p===1)).map(l=>l.t).join('\n');
+  let fecha = null, turno = null, m;
+  if ((m = cab.match(/D[IÍ]A\s*:?\s*(\d{1,2})\s*MES\s*:?\s*([A-Za-zÁÉÍÓÚáéíóú]+)\s*A[ÑN]O\s*:?\s*(\d{4})/i))){
+    const mi = MESES.indexOf(norm(m[2]).replace('setiembre','septiembre'));
+    if (mi>=0) fecha = fechaISO(m[1], mi+1, m[3]);
+  }
+  if (!fecha && (m = cab.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/))) fecha = fechaISO(m[1],m[2],m[3]);
+  if ((m = cab.match(/\b(\d{1,2})\s*[Aa]\s*(\d{1,2})\b/))) turno = (+m[1] >= 12 || +m[1] < 5) ? 'Noche' : 'Día';
+  turno = turno || turnoPorNombre(archivo);
+  const fechaDe = hora => (turno==='Noche' && hora && +hora.slice(0,2) < 12) ? diaSig(fecha) : fecha;
+
+  const novedades = [], controles = [];
+  // Cronológico y controles: filas ancladas en la columna Solución (Si / No)
+  for (const sec of ['crono','controles']){
+    {
+      const its = todos.filter(i => i.sec===sec);
+      if (!its.length) continue;
+      const filas = filasPorSolucion(its);
+      for (const f of filas){
+        const lineas = f.lineas.map(l=>l.t).filter(t => !/^(NOVEDAD|HORARIO|SOLU|CION|INFORMADO|SUPERVISOR|DETECT[OÓ])\b/i.test(t) && !SECCIONES.some(([,re]) => re.test(t)));
+        if (!lineas.length) continue;
+        const hora = f.hora;
+        if (sec==='crono'){
+          const txt = lineas.join(' ');
+          if (RE_RUTINA.test(txt)) continue;
+          const sol = /^s[ií]/i.test(f.sol||'') ? 'solucionado' : (/^no/i.test(f.sol||'') ? 'pendiente' : estadoTexto('', txt).e);
+          novedades.push({ ref:'Cronológico', fechaEvento: fechaDe(hora), hora, tipo: clasificar(txt), lugar: f.resp||'',
+            detalle: cortar(limpiar(txt), 170), estado: sol, motivo: f.sol ? `Solución: ${f.sol}` : '',
+            clave: `u|${fecha}|${turno}|crono|${hora}|${norm(txt).slice(0,30)}`, original: lineas.join('\n') });
+        } else {
+          const c = analizarControl(lineas);
+          const clave = `c|${norm(c.titulo)}|${norm(f.resp)}`;
+          controles.push({clave, titulo:c.titulo, fechaEvento: fechaDe(hora), hora, hallazgos: c.hallazgos, sinEstado: c.sinEstado});
+          if (c.sinEstado.length){
+            novedades.push({ ref:'Controles', fechaEvento: fechaDe(hora), hora, tipo: 'Control: ' + c.titulo.replace(/^control (de )?/i,''),
+              lugar: [...new Set(c.sinEstado.map(x => (x.match(/^Etapa \d+/)||[''])[0]).filter(Boolean))].join(', '),
+              detalle: 'Sin estado informado: ' + agruparEtapas(c.sinEstado), estado: 'incompleto',
+              motivo: 'El informe lista los puntos controlados pero no dice si están funcionando, apagados o con falla',
+              clave: clave + '|inc', original: lineas.join('\n') });
+          }
+          if (c.hallazgos.length){
+            novedades.push({ ref:'Controles', fechaEvento: fechaDe(hora), hora, tipo: 'Control: ' + c.titulo.replace(/^control (de )?/i,''),
+              lugar: c.etapas.join(', '), detalle: agruparEtapas(c.hallazgos), estado: 'pendiente',
+              motivo: 'Hallazgo del control; se da por resuelto cuando un control posterior no lo registra',
+              clave, original: lineas.join('\n'), hallazgos: c.hallazgos });
+          }
+        }
+      }
+    }
+  }
+  // Tablas con hora (ALIARA, recorridos, rondines, cámaras)
+  for (const sec of ['aliara','recorrido','rondin','camaras']){
+    const its = todos.filter(i => i.sec===sec);
+    if (!its.length) continue;
+    for (const f of filasPorHora(its)){
+      const nov = f.col.novedad || '';
+      if (!nov && !f.col.motivo) continue;
+      const hora = f.hora;
+      if (sec==='aliara'){
+        const mot = f.col.motivo || '';
+        const pend = /corte|cortad|da[ñn]|intrus|ingreso|rotur|falla|pendiente/i.test(mot);
+        const zona = (nov.match(/zona\s*(\d+)/i)||[])[1];
+        novedades.push({ ref:'ALIARA', fechaEvento: fechaDe(hora), hora, tipo:'Alarma ALIARA', lugar: zona ? `Zona ${zona}` : '',
+          detalle: cap(nov) + (mot ? ` – ${mot}` : ''), estado: !mot ? 'pendiente' : (pend ? 'pendiente' : 'solucionado'),
+          motivo: mot ? `Verificada: ${mot}` : 'Sin motivo informado', clave: `u|${fecha}|${turno}|aliara|${hora}`, original: [nov, mot].join('\n') });
+      } else if (sec==='camaras'){
+        if (/en funcionamiento|funcionan|operativ|\bok\b|sin novedad/i.test(nov) && !/no funciona|sin funcionar|fuera/i.test(nov)) continue;
+        novedades.push({ ref:'Cámaras', fechaEvento: fechaDe(hora), hora, tipo:'Falla de sistema / cámaras', lugar:'',
+          detalle: cap(nov), estado:'pendiente', motivo:'', clave:`c|camaras`, original: nov });
+      } else {
+        if (!RE_ANOM.test(nov)) continue;
+        novedades.push({ ref: sec==='recorrido'?'Recorrido perimetral':'Rondín', fechaEvento: fechaDe(hora), hora, tipo: clasificar(nov),
+          lugar:'', detalle: cortar(limpiar(nov),170), estado: RE_ANOM.test(nov)?'pendiente':'informativo', motivo:'',
+          clave:`u|${fecha}|${turno}|${sec}|${hora}`, original: nov });
+      }
+    }
+  }
+  return {formato:'Informe diario (planilla)', origen:'Informe diario', fecha, turno, novedades, controles};
+}
+
+// Asigna renglones a filas: cada fila tiene un ancla; los renglones se reparten en orden,
+// sin cortar un párrafo (renglones a 12 pt) y minimizando la distancia vertical al ancla.
+function repartir(lineas, anclas, arriba=true){
+  const n = lineas.length, m = anclas.length;
+  if (!m) return [];
+  if (!n) return anclas.map(()=>[]);
+  const INF = 1e12, gapCorte = 12.6, PEN = 120, SALTO = 60;
+  const sep = lineas.map((l,i) => i ? lineas[i-1].y - l.y : 99);
+  const dp = Array.from({length:n}, () => new Array(m).fill(INF));
+  const vino = Array.from({length:n}, () => new Array(m).fill(-1));
+  // un renglón no puede quedar muy por encima del ancla de su fila (el ancla está arriba o al medio de la celda)
+  const costo = (l,a) => arriba && l.y > a.y + 14 ? 1e6 : Math.abs(l.y - a.y) * (arriba ? 0.3 : 1);
+  for (let j=0;j<m;j++) dp[0][j] = costo(lineas[0], anclas[j]) + j*SALTO;
+  for (let i=1;i<n;i++) for (let j=0;j<m;j++){
+    const c = costo(lineas[i], anclas[j]);
+    let best = dp[i-1][j], arg = j;
+    for (let k=0;k<j;k++){
+      const v = dp[i-1][k] + (sep[i] <= gapCorte ? PEN : 0) + (j-k-1)*SALTO;
+      if (v < best){ best=v; arg=k; }
+    }
+    dp[i][j] = best + c; vino[i][j] = arg;
+  }
+  let j = 0; for (let k=1;k<m;k++) if (dp[n-1][k] + (m-1-k)*SALTO < dp[n-1][j] + (m-1-j)*SALTO) j = k;
+  const asig = new Array(n);
+  for (let i=n-1;i>=0;i--){ asig[i]=j; if (i) j = vino[i][j]; }
+  const out = anclas.map(()=>[]);
+  lineas.forEach((l,i)=> out[asig[i]].push(l));
+  return out;
+}
+function filasPorSolucion(its){
+  const esHora = s => /^\d{1,2}[:.]\d{2}$/.test(s);
+  const sn = its.filter(i => /^(si|sí|no)$/i.test(i.s) && i.x > 280);
+  if (!sn.length) return [];
+  const grupos = [];
+  for (const it of sn.sort((a,b)=> a.p-b.p || b.y-a.y || a.x-b.x)){
+    const g = grupos.find(g => g.p === it.p && Math.abs(g.y-it.y) <= 3);
+    if (g) g.items.push(it); else grupos.push({p:it.p, y:it.y, items:[it]});
+  }
+  grupos.forEach(g => g.items.sort((a,b)=>a.x-b.x));
+  const solX = Math.min(...grupos.map(g=>g.items[0].x));
+  // columna responsable: el ítem inmediatamente a la izquierda de "Si" en cada fila
+  let respX = Infinity;
+  for (const g of grupos){
+    const izq = its.filter(i => i.p===g.p && Math.abs(i.y-g.y)<=3 && i.x < g.items[0].x - 5 && !esHora(i.s)).sort((a,b)=>b.x-a.x)[0];
+    if (izq && izq.x > 230) respX = Math.min(respX, izq.x);
+  }
+  if (!isFinite(respX)) respX = solX - 40;
+  const pags = [...new Set(its.map(i=>i.p))].sort((a,b)=>a-b);
+  const lineasDe = arr => pags.flatMap(p => armarLineas(arr.filter(i => i.p===p)));
+  const texto = its.filter(i => !esHora(i.s) && i.x < respX - 4);
+  const resp = its.filter(i => i.x >= respX - 4 && i.x < solX - 3);
+  const lineas = lineasDe(texto), lineasResp = lineasDe(resp);
+  // en algunas planillas el "Si" está arriba de la celda y en otras centrado (y la celda puede seguir en la página siguiente)
+  const esCab = t => SECCIONES.some(([,re]) => re.test(t)) || /^(NOVEDAD|HORARIO|SOLU|CION|INFORMADO|SUPERVISOR|DETECT[OÓ])\b/i.test(t);
+  const l0 = lineas.find(l => l.p === grupos[0].p && !esCab(l.t) && l.y < grupos[0].y + 80);
+  const arriba = !l0 || l0.y <= grupos[0].y + 14;
+  const repartirTodo = ls => {
+    if (!arriba) return repartirCentrado(ls, grupos);
+    const out = grupos.map(()=>[]);
+    for (const p of pags){
+      const gi = grupos.map((g,i)=>i).filter(i => grupos[i].p === p);
+      const lp = ls.filter(l => l.p === p);
+      if (!gi.length){ const prev = grupos.map((g,i)=>i).filter(i => grupos[i].p < p).pop(); if (prev !== undefined) out[prev].push(...lp); continue; }
+      repartir(lp, gi.map(i => grupos[i]), true).forEach((r,k) => out[gi[k]].push(...r));
+    }
+    return out;
+  };
+  const reparto = repartirTodo(lineas), respLin = repartirTodo(lineasResp);
+  const horas = its.filter(i => esHora(i.s) && i.x < 115);
+  return grupos.map((g,i) => {
+    const h = horas.filter(x => x.p === g.p).sort((a,b) => Math.abs(a.y-g.y) - Math.abs(b.y-g.y))[0];
+    return { y: g.y, sol: g.items[0].s, inf: g.items[1] ? g.items[1].s : '',
+      hora: h && Math.abs(h.y - g.y) < 30 ? h.s.replace('.',':').padStart(5,'0') : '',
+      lineas: reparto[i], resp: respLin[i].map(l=>l.t).join(' ').replace(/,$/,'') };
+  });
+}
+// Celdas con el ancla centrada: cada fila toma un bloque seguido de renglones cuyo centro (en la página del ancla)
+// queda lo más cerca posible del ancla; lo que sigue en páginas posteriores pertenece a la misma celda.
+function repartirCentrado(lineas, anclas){
+  const n = lineas.length, m = anclas.length;
+  if (!m) return [];
+  if (!n) return anclas.map(()=>[]);
+  const INF = 1e12, PEN = 40;
+  const corteMalo = i => i > 0 && i < n && lineas[i].p === lineas[i-1].p && (lineas[i-1].y - lineas[i].y) <= 13.5;
+  const dp = Array.from({length:n+1}, () => new Array(m+1).fill(INF));
+  const vino = Array.from({length:n+1}, () => new Array(m+1).fill(-1));
+  dp[0][0] = 0;
+  for (let j=1; j<=m; j++){
+    const a = anclas[j-1];
+    for (let k=0; k<n; k++){
+      if (dp[k][j-1] >= INF) continue;
+      if (lineas[k].p < a.p) continue;            // una celda no empieza antes de la página de su ancla
+      const base = dp[k][j-1] + (corteMalo(k) ? PEN : 0);
+      let max = -Infinity, min = Infinity, salioDePagina = false;
+      for (let i=k+1; i<=n; i++){
+        const l = lineas[i-1];
+        if (l.p === a.p){ if (salioDePagina) break; max = Math.max(max, l.y); min = Math.min(min, l.y); }
+        else salioDePagina = true;
+        if (max === -Infinity) continue;
+        const v = base + Math.abs((max+min)/2 - a.y);
+        if (v < dp[i][j]){ dp[i][j] = v; vino[i][j] = k; }
+      }
+    }
+  }
+  const out = anclas.map(()=>[]);
+  let i = n;
+  if (dp[n][m] >= INF) return repartir(lineas, anclas, false);
+  for (let j=m; j>0; j--){ const k = vino[i][j]; out[j-1] = lineas.slice(k, i); i = k; }
+  return out;
+}
+function filasPorHora(its){
+  const esHora = s => /^\d{1,2}[:.]\d{2}$/.test(s);
+  const horasIzq = its.filter(i => esHora(i.s)).sort((a,b)=>a.x-b.x);
+  if (!horasIzq.length) return [];
+  const xMin = horasIzq[0].x;
+  const pag0 = Math.min(...its.map(i=>i.p));
+  const anclasTodas = its.filter(i => esHora(i.s) && i.x <= xMin + 25);
+  const yTop = Math.max(...anclasTodas.filter(i=>i.p===pag0).map(i=>i.y));
+  // encabezados: ítems de la primera página por encima de la primera fila (sin el título de la sección)
+  const esTitulo = i => /^(ALIARA|RECORRIDO|ROND[IÍ]N|C[AÁ]MARAS|:)/.test(i.s) || /^Control De GPS/i.test(i.s);
+  const cab = its.filter(i => i.p===pag0 && i.y > yTop + 14 && !esTitulo(i) && !/[a-záéíóúñ]/.test(i.s));
+  const cols = [];
+  for (const it of cab.sort((a,b)=>(a.x+a.w/2)-(b.x+b.w/2))){
+    const c = it.x + it.w/2;
+    const col = cols.find(k => Math.abs(k.c - c) < 28 || (it.x < k.x1 && it.x+it.w > k.x0 && Math.abs(k.c-c) < 45));
+    if (col){ col.t.push(it.s); col.x0=Math.min(col.x0,it.x); col.x1=Math.max(col.x1,it.x+it.w); col.c=(col.x0+col.x1)/2; }
+    else cols.push({c, x0:it.x, x1:it.x+it.w, t:[it.s]});
+  }
+  cols.forEach(k => k.label = norm(k.t.join(' ')));
+  const iNov = cols.findIndex(k => /estado/.test(k.label)) >= 0 ? cols.findIndex(k => /estado/.test(k.label)) : cols.findIndex(k => /novedad/.test(k.label));
+  const iMot = cols.findIndex(k => /motivo/.test(k.label));
+  if (iNov < 0) return [];
+  const filas = [];
+  for (const p of [...new Set(anclasTodas.map(i=>i.p))].sort((a,b)=>a-b)){
+    const anclas = anclasTodas.filter(i=>i.p===p).sort((a,b)=>b.y-a.y);
+    const cuerpo = its.filter(i => i.p===p && !cab.includes(i) && !esTitulo(i) && !anclasTodas.includes(i));
+    const porCol = {novedad:[], motivo:[]};
+    for (const it of cuerpo){
+      const c = it.x + it.w/2;
+      let best = -1, bd = Infinity;
+      cols.forEach((k,ix) => { const d = Math.abs(k.c - c); if (d < bd){ bd=d; best=ix; } });
+      if (best === iNov) porCol.novedad.push(it); else if (best === iMot) porCol.motivo.push(it);
+    }
+    const rn = repartir(armarLineas(porCol.novedad), anclas, false);
+    const rm = repartir(armarLineas(porCol.motivo), anclas, false);
+    anclas.forEach((a,i) => filas.push({ hora: a.s.replace('.',':').padStart(5,'0'),
+      col: { novedad: (rn[i]||[]).map(l=>l.t).join(' ').trim(), motivo: (rm[i]||[]).map(l=>l.t).join(' ').trim() } }));
+  }
+  return filas;
+}
+function agruparEtapas(h){
+  const g = []; 
+  for (const x of h){
+    const m = x.match(/^(Etapa \d+) – (.*)$/); const et = m ? m[1] : ''; const t = m ? m[2] : x;
+    const u = g[g.length-1];
+    if (u && u.et === et) u.t.push(t); else g.push({et, t:[t]});
+  }
+  return g.map(x => (x.et ? x.et + ': ' : '') + x.t.join('; ')).join(' · ');
+}
+function analizarControl(lineas){
+  // une renglones cortados (siguen en minúscula, con coma o con un paréntesis abierto)
+  const ren = [];
+  for (const t of lineas){
+    const prev = ren[ren.length-1];
+    const sigue = prev && (/^[a-záéíóúñ,(]/.test(t) ||
+      (prev.match(/\(/g)||[]).length > (prev.match(/\)/g)||[]).length ||
+      (/:/.test(prev) && !/:/.test(t) && !/^(zona|etapa|box|caba|sector|puerta|port|\d)/i.test(t) && ren.length > 1));
+    if (sigue) ren[ren.length-1] = prev + ' ' + t;
+    else ren.push(t);
+  }
+  const titulo = cap((ren.shift()||'Control').toLowerCase());
+  const hallazgos = [], sinEstado = []; const etapas = new Set(); let etapa = '';
+  const pideEstado = RE_PIDE_ESTADO.test(titulo);
+  for (const r of ren){
+    const me = r.match(/^(etapa\s*\d+)\s*:?\s*(.*)$/i);
+    let txt = r;
+    if (me){ etapa = cap(me[1].toLowerCase()); txt = me[2]; if (!txt) continue; }
+    if (pideEstado && !RE_ANOM.test(txt) && !RE_OK.test(txt)){ sinEstado.push((etapa ? etapa + ' – ' : '') + txt.replace(/\s+/g,' ')); continue; }
+    if (RE_ANOM.test(txt)){
+      hallazgos.push(cap(((etapa ? etapa + ' – ' : '') + txt.replace(/\s+/g,' ').replace(/\s+:/g,':')).toLowerCase()).replace(/\betapa\b/g,'Etapa').replace(/\bzona\b/g,'Zona'));
+      if (etapa) etapas.add(etapa);
+    }
+  }
+  return {titulo, hallazgos, sinEstado, etapas:[...etapas]};
+}
+
+/* ===================== Carga de archivos ===================== */
+async function cargarArchivos(files){
+  const lista = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type==='application/pdf');
+  if (!lista.length) return;
+  if (!window.pdfjsLib){ $('progreso').innerHTML = '<span class="err">No se pudo cargar el lector de PDF (hace falta internet la primera vez).</span>'; return; }
+  let n=0;
+  for (const f of lista){
+    n++; $('progreso').textContent = `Leyendo ${n} de ${lista.length}: ${f.name}…`;
+    try{
+      const pags = await leerPdf(new Uint8Array(await f.arrayBuffer()));
+      const txt = pags.flat().map(i=>i.s).join(' ');
+      let inf;
+      if (/INFORME DE NOVEDAD|PARTE DIARIO/i.test(txt)) inf = leerParte(pags, f.name);
+      else if (/INFORME DIARIO/i.test(txt) && /CRONOL[OÓ]GICO|CONTROLES|INFORMADO AL|SOLUCI[OÓ]N|SOLU\s*CION/i.test(txt)) inf = leerPlanilla(pags, f.name);
+      else inf = {formato:'No reconocido', origen:'—', fecha:null, turno:turnoPorNombre(f.name), novedades:[], controles:[], error:'No se reconoce el formato del informe'};
+      inf.archivo = f.name; inf.id = Math.random().toString(36).slice(2);
+      inf.turno = inf.turno || 'Noche';
+      if (!inf.fecha) inf.error = (inf.error||'') + ' No se encontró la fecha.';
+      // reemplaza un informe igual (mismo formato, fecha y turno)
+      const i = S.informes.findIndex(x => x.formato===inf.formato && x.fecha===inf.fecha && x.turno===inf.turno && inf.fecha);
+      if (i>=0){ inf.origen = S.informes[i].origen; S.informes[i] = inf; } else S.informes.push(inf);
+    }catch(e){
+      console.error(e);
+      S.informes.push({archivo:f.name, id:Math.random().toString(36).slice(2), formato:'Error', origen:'—', fecha:null, turno:'', novedades:[], controles:[], error:'No se pudo leer el PDF ('+e.message+')'});
+    }
+  }
+  $('progreso').textContent = `Listo: ${lista.length} archivo(s) leído(s).`;
+  renderTodo();
+}
+
+/* ===================== Armado del resumen ===================== */
+function construir(){
+  const infs = S.informes.filter(i => i.fecha).sort((a,b)=> ordenTurno(a.fecha,a.turno) - ordenTurno(b.fecha,b.turno));
+  const ocs = [];
+  for (const inf of infs){
+    inf.novedades.forEach((n,k) => ocs.push({...n, inf, origen: inf.origen, turno: inf.turno, fechaInf: inf.fecha,
+      orden: ordenTurno(inf.fecha, inf.turno)*1000 + (n.hora ? horaTurno(n.hora, inf.turno) : k), id: inf.id+'|'+k}));
+  }
+  ocs.sort((a,b)=>a.orden-b.orden);
+  // Objetos encontrados que después se entregan a su dueño
+  const usados = new Set();
+  for (const h of ocs.filter(o => o.tipo==='Hallazgo de objeto' && o.estado==='pendiente')){
+    const d = ocs.find(o => o.tipo==='Devolución de objeto' && !usados.has(o.id) && o.origen===h.origen && o.orden >= h.orden && (!h.objeto || !o.objeto || o.objeto===h.objeto));
+    if (d){ usados.add(d.id); h.resueltoPor = `Entregado a su dueño (${fmtCorta(d.fechaInf)} ${d.turno.toLowerCase()}, ${d.ref})`; d.vinculo = `Corresponde a: ${h.ref} del ${fmtCorta(h.fechaInf)}`; }
+  }
+  // 1) misma clave y origen
+  const raiz = new Map(), motivos = new Map();
+  const buscar = id => { while (raiz.get(id) !== id) id = raiz.get(id); return id; };
+  const unir = (a, b, por) => { const ra = buscar(a.id), rb = buscar(b.id); if (ra !== rb) raiz.set(rb, ra);
+    const r = buscar(a.id); motivos.set(r, new Set([...(motivos.get(ra)||[]), ...(motivos.get(rb)||[]), por])); };
+  ocs.forEach(o => raiz.set(o.id, o.id));
+  const porClave = new Map();
+  for (const o of ocs){ const k = o.origen + '§' + o.clave; if (porClave.has(k)) unir(porClave.get(k), o, o.clave.startsWith('c|') ? 'mismo control' : 'mismo tipo y lugar'); else porClave.set(k, o); }
+  // 2) el mismo evento en otro informe: el texto coincide o las fotos coinciden
+  for (let i=0; i<ocs.length; i++) for (let j=i+1; j<ocs.length; j++){
+    const a = ocs[i], b = ocs[j];
+    if (a.inf === b.inf || a.origen !== b.origen) continue;
+    if (a.clave.startsWith('c|') || b.clave.startsWith('c|')) continue;
+    const fotos = (a.imgs||[]).some(x => (b.imgs||[]).some(y => distHash(x.hash, y.hash) <= 8));
+    if (fotos){ unir(a, b, 'las fotos coinciden'); continue; }
+    if (a.estado === 'informativo' || b.estado === 'informativo' || a.tipo !== b.tipo) continue;
+    const mismoLugar = a.lugar && norm(a.lugar) === norm(b.lugar);
+    if (simTexto(a.lugar+' '+a.detalle, b.lugar+' '+b.detalle) >= 0.55 || (mismoLugar && simTexto(a.detalle, b.detalle) >= 0.35)) unir(a, b, 'el texto coincide');
+  }
+  const grupos = new Map();
+  for (const o of ocs){ const r = buscar(o.id); if (!grupos.has(r)) grupos.set(r, {r, ocs:[]}); grupos.get(r).ocs.push(o); }
+  const ctrls = [];
+  for (const inf of infs) for (const c of inf.controles) ctrls.push({...c, origen: inf.origen, turno: inf.turno, fechaInf: inf.fecha, orden: ordenTurno(inf.fecha, inf.turno)*1000 + horaTurno(c.hora, inf.turno)});
+  const etiqueta = o => fmtCorta(o.fechaInf)+' '+(o.turno==='Noche'?'N':'D');
+  const lista = [];
+  for (const g of grupos.values()){
+    g.ocs.sort((a,b)=>a.orden-b.orden);
+    const pri = g.ocs[0], ult = g.ocs[g.ocs.length-1];
+    const k = pri.origen + '§' + pri.clave;
+    const esCtrl = pri.clave.startsWith('c|');
+    // momentos en que se dio por solucionado
+    const sol = [];
+    for (const o of g.ocs) if (o.estado === 'solucionado' || o.resueltoPor) sol.push({orden:o.orden, txt: o.resueltoPor || ''});
+    const esInc = pri.clave.endsWith('|inc'), base = pri.clave.replace(/\|inc$/, '');
+    if (esCtrl) for (const c of ctrls) if (c.origen===pri.origen && c.clave===base && c.orden > pri.orden && (esInc ? !(c.sinEstado||[]).length : !c.hallazgos.length))
+      sol.push({orden:c.orden, txt: esInc ? `Estado informado en el control del ${fmtCorta(c.fechaInf)} (${c.turno.toLowerCase()})` : `Sin hallazgos en el control del ${fmtCorta(c.fechaInf)} (${c.turno.toLowerCase()})`});
+    sol.sort((a,b)=>a.orden-b.orden);
+    const ultSol = sol.length ? sol[sol.length-1] : null;
+    // lo que sigue abierto después de la última solución
+    const abiertas = g.ocs.filter(o => (!ultSol || o.orden > ultSol.orden) && o.estado === 'pendiente' && !o.resueltoPor);
+    const infAbiertas = [...new Set(abiertas.map(o => o.inf))];
+    const infTodas = [...new Set(g.ocs.map(o => o.inf))];
+    const seg = []; let estado;
+    const coincide = [...(motivos.get(g.r)||[])].filter(m => m !== 'mismo control');
+    let repetidos = [];
+    if (esCtrl && infAbiertas.length >= 2){
+      const original = new Map();
+      const listas = infAbiertas.map(inf => abiertas.filter(o=>o.inf===inf).flatMap(o => (o.hallazgos||[]).map(h => { original.set(norm(h), h); return norm(h); })));
+      repetidos = [...new Set(listas[listas.length-1].filter(h => listas.slice(0,-1).some(l => l.includes(h))))].map(h => original.get(h));
+    }
+    if (infAbiertas.length >= 2 && (!esCtrl || repetidos.length)){
+      estado = 'repeticion';
+      seg.push(`Repetida en ${infAbiertas.length} informes sin solución en el medio (${[...new Set(abiertas.map(etiqueta))].join(', ')})`);
+      if (esCtrl) seg.push(`Se repite: ${repetidos.slice(0,6).join('; ')}${repetidos.length>6?'…':''}`);
+      else if (coincide.length) seg.push('Coincide: ' + coincide.join(' y '));
+    } else if (abiertas.length){
+      estado = 'pendiente';
+      if (esCtrl && infAbiertas.length >= 2) seg.push(`Aparece en ${infAbiertas.length} informes con hallazgos distintos`);
+      if (ultSol) seg.push(`Vuelve a aparecer después de solucionarse (${ultSol.txt || 'informe anterior'})`);
+      if (esCtrl && !ctrls.some(c => c.origen===pri.origen && c.clave===base && c.orden > ult.orden)) seg.push('Sin control posterior cargado');
+      if (!esCtrl && ult.motivo) seg.push(ult.motivo);
+    } else if (g.ocs.some(o => o.estado === 'incompleto' && (!ultSol || o.orden > ultSol.orden))){
+      estado = 'incompleto';
+      const infInc = [...new Set(g.ocs.filter(o => o.estado === 'incompleto' && (!ultSol || o.orden > ultSol.orden)).map(o => o.inf))];
+      seg.push('Falta información para determinar la situación');
+      if (infInc.length > 1) seg.push(`Sin estado en ${infInc.length} informes (${[...new Set(g.ocs.filter(o=>o.estado==='incompleto').map(etiqueta))].join(', ')})`);
+      if (ult.motivo) seg.push(ult.motivo);
+    } else if (g.ocs.every(o => o.estado === 'informativo')){
+      estado = 'informativo';
+      if (infTodas.length > 1) seg.push(`Se registra en ${infTodas.length} informes (${[...new Set(g.ocs.map(etiqueta))].join(', ')})`);
+      if (ult.motivo) seg.push(ult.motivo);
+    } else {
+      estado = 'solucionado';
+      // la racha más larga de informes sin solución entre medio
+      const evs = [...g.ocs.map(o => ({orden:o.orden, o})), ...sol.map(x => ({orden:x.orden, sol:true}))].sort((a,b)=>a.orden-b.orden);
+      let racha = new Set(), maxRacha = 0;
+      for (const e of evs){
+        if (e.sol || e.o.estado === 'solucionado' || e.o.resueltoPor){ maxRacha = Math.max(maxRacha, racha.size); racha = new Set(); }
+        else if (e.o.estado === 'pendiente') racha.add(e.o.inf);
+      }
+      const antes = {length: maxRacha};
+      if (antes.length >= 2) seg.push(`Se repitió en ${antes.length} informes antes de solucionarse`);
+      else if (infTodas.length > 1) seg.push(`Se registra en ${infTodas.length} informes (${[...new Set(g.ocs.map(etiqueta))].join(', ')})`);
+      if (ultSol && ultSol.txt) seg.push(ultSol.txt);
+      else if (ult.motivo) seg.push(ult.motivo);
+    }
+    if (ult.vinculo) seg.push(ult.vinculo);
+    const man = S.manual[k];
+    lista.push({ k, ocs:g.ocs, pri, ult, origen: pri.origen, turno: pri.turno, fecha: pri.fechaEvento || pri.fechaInf, hora: pri.hora,
+      tipo: ult.tipo, lugar: ult.lugar || pri.lugar, detalle: ult.detalle, auto: estado, estado: man ? man.estado : estado, aMano: !!man, verif: man || null,
+      seguimiento: [...new Set(seg.filter(Boolean))].join(' · '), nota: S.notas[k] || '' });
+  }
+  lista.sort((a,b)=> a.pri.orden - b.pri.orden);
+  return lista;
+}
+const VACIAS = new Set('de la el los las un una unos unas y en con del al se que por su sus lo para sin sobre como esta este'.split(' '));
+function palabras(t){ return new Set(norm(t).replace(/[^a-z0-9ñ ]/g,' ').split(' ').filter(w => w.length > 2 && !VACIAS.has(w))); }
+function simTexto(a, b){ const A = palabras(a), B = palabras(b); if (!A.size || !B.size) return 0; let i = 0; A.forEach(x => { if (B.has(x)) i++; }); return i / (A.size + B.size - i); }
+function horaTurno(h, turno){ if (!h) return 0; const [H,M] = h.split(':').map(Number); let v = H*60+M; if (turno==='Noche' && H < 12) v += 1440; return v; }
+
+/* ===================== Pantallas ===================== */
+let RES = [];
+function renderTodo(){ RES = construir(); renderInformes(); renderResumen(); renderPeriodo(); }
+function renderPeriodo(){
+  const f = S.informes.filter(i=>i.fecha).map(i=>i.fecha).sort();
+  $('periodoTxt').textContent = f.length ? `Período cargado: ${fmtF(f[0])}${f[0]!==f[f.length-1]?' al '+fmtF(f[f.length-1]):''}` : '';
+}
+function renderInformes(){
+  const tb = $('tInformes');
+  const infs = S.informes.slice().sort((a,b)=> (a.fecha||'').localeCompare(b.fecha||'') || (a.turno||'').localeCompare(b.turno||''));
+  if (!infs.length){ tb.innerHTML = '<tr><td colspan="7" class="nota">Todavía no hay informes.</td></tr>'; $('huecos').textContent=''; return; }
+  tb.innerHTML = infs.map(i => `<tr>
+    <td>${esc(i.archivo)}${i.error?`<br><small class="err">${esc(i.error)}</small>`:''}</td>
+    <td>${esc(i.formato)}</td>
+    <td><input type="text" value="${esc(i.origen)}" data-orig="${i.id}" size="16" title="Nombre con el que se agrupa (por ejemplo, el puesto u objetivo)"></td>
+    <td>${fmtF(i.fecha)||'—'}</td>
+    <td><select data-turno="${i.id}"><option ${i.turno==='Día'?'selected':''}>Día</option><option ${i.turno==='Noche'?'selected':''}>Noche</option></select></td>
+    <td>${i.novedades.length}</td>
+    <td><button class="link" data-quitar="${i.id}">Quitar</button></td></tr>`).join('');
+  // días sin informe dentro del período, por origen y turno
+  const txt = [];
+  const origenes = [...new Set(S.informes.filter(i=>i.fecha).map(i=>i.origen))];
+  for (const o of origenes){
+    const de = S.informes.filter(i=>i.fecha && i.origen===o);
+    const fechas = de.map(i=>i.fecha).sort();
+    if (fechas.length < 2 && de.length < 2) continue;
+    const faltan = [];
+    for (let d=fechas[0]; d<=fechas[fechas.length-1]; d=diaSig(d))
+      for (const t of ['Día','Noche']) if (de.some(i=>i.turno===t) && !de.some(i=>i.fecha===d && i.turno===t)) faltan.push(`${fmtCorta(d)} ${t.toLowerCase()}`);
+    if (faltan.length) txt.push(`<b>${esc(o)}</b>: faltan ${faltan.length>12 ? faltan.slice(0,12).join(', ')+'…' : faltan.join(', ')}`);
+  }
+  $('huecos').innerHTML = txt.length ? 'Informes que faltan en el período: ' + txt.join(' · ') : '';
+}
+function filtrados(){
+  const fe=$('fEstado').value, fo=$('fOrigen').value, ft=$('fTurno').value, fx=norm($('fTexto').value), fv=$('fVerif').value;
+  let l = RES.filter(r => (!fe || r.estado===fe) && (!fv || (fv==='si') === !!r.verif) && (!fo || r.origen===fo) && (!ft || r.turno===ft) &&
+    (!fx || norm([r.tipo,r.lugar,r.detalle,r.seguimiento,r.nota].join(' ')).includes(fx)));
+  const pes = {repeticion:0, pendiente:1, incompleto:2, solucionado:3, informativo:4};
+  if ($('fPendPrimero').checked) l = l.slice().sort((a,b)=> pes[a.estado]-pes[b.estado] || a.pri.orden-b.pri.orden);
+  return l;
+}
+function renderResumen(){
+  const origenes = [...new Set(RES.map(r=>r.origen))];
+  const sel = $('fOrigen'), v = sel.value;
+  sel.innerHTML = '<option value="">Todos</option>' + origenes.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
+  const c = {repeticion:0, pendiente:0, incompleto:0, solucionado:0, informativo:0};
+  RES.forEach(r => c[r.estado]++);
+  $('tarjetas').innerHTML = `
+    <div class="tarjeta"><div class="n">${RES.length}</div><div class="t">Novedades en el período</div></div>
+    <div class="tarjeta sv"><div class="n">${RES.filter(r=>r.verif).length} / ${RES.length}</div><div class="t">Verificadas a mano</div></div>
+    <div class="tarjeta re"><div class="n">${c.repeticion}</div><div class="t">Repeticiones</div></div>
+    <div class="tarjeta pe"><div class="n">${c.pendiente}</div><div class="t">Pendientes</div></div>
+    <div class="tarjeta ic"><div class="n">${c.incompleto}</div><div class="t">Incompletas</div></div>
+    <div class="tarjeta ok"><div class="n">${c.solucionado}</div><div class="t">Solucionadas</div></div>
+    <div class="tarjeta in"><div class="n">${c.informativo}</div><div class="t">Informativas</div></div>`;
+  const nInf = S.informes.filter(i=>i.fecha).length;
+  $('avisoUno').style.display = nInf ? '' : 'none';
+  $('avisoUno').textContent = nInf === 1 ? 'Hay un solo informe cargado: lo pendiente se sigue cuando cargues los informes siguientes.' : `${nInf} informes cargados. Los pendientes se comparan con los informes posteriores del mismo origen.`;
+  const l = filtrados();
+  const tb = $('tResumen');
+  if (!RES.length){ tb.innerHTML = '<tr><td colspan="10" class="nota">Cargá informes en la solapa 1.</td></tr>'; return; }
+  if (!l.length){ tb.innerHTML = '<tr><td colspan="10" class="nota">No hay novedades con esos filtros.</td></tr>'; return; }
+  tb.innerHTML = l.map(r => {
+    const abierto = S.abiertos.has(r.k);
+    const fila = `<tr class="f-${r.estado}">
+      <td>${fmtF(r.fecha)}</td><td>${r.turno}</td><td>${esc(r.hora||'')}</td><td>${esc(r.origen)}</td>
+      <td>${esc(r.tipo)}</td><td>${esc(r.lugar)}</td><td>${esc(r.detalle)}</td>
+      <td><span class="estado e-${r.estado}">${ESTADOS[r.estado]}</span>
+        <br>${r.verif ? `<span class="marca si">✓ Verificado${r.verif.estado !== r.auto ? ` (la página sugería ${ESTADOS[r.auto]})` : ''} · ${r.verif.cuando}</span>` : '<span class="marca no">Sin verificar · lo sugiere la página</span>'}
+        <div class="verif"><select data-est="${esc(r.k)}" title="Verificación manual">
+          <option value="">${r.verif ? 'Quitar verificación' : 'Verificar…'}</option>
+          <option value="__ok" ${r.verif && r.verif.estado===r.auto ? 'selected' : ''}>Confirmar: ${ESTADOS[r.auto]}</option>
+          ${Object.entries(ESTADOS).filter(([k])=>k!==r.auto).map(([k,v])=>`<option value="${k}" ${r.verif && r.verif.estado===k ? 'selected':''}>Cambiar a ${v}</option>`).join('')}
+        </select></div></td>
+      <td>${esc(r.seguimiento)}${r.nota?`<br><i>Nota: ${esc(r.nota)}</i>`:''}</td>
+      <td><button class="link" data-abrir="${esc(r.k)}">${abierto?'Cerrar':'Detalle'}</button></td></tr>`;
+    if (!abierto) return fila;
+    const det = r.ocs.map((o,i) => `<div class="ocurr"><b>${fmtCorta(o.fechaInf)} ${o.turno.toLowerCase()}</b> · ${esc(o.hora||'')} · ${esc(o.ref)} ·
+      <span class="estado e-${o.estado}">${ESTADOS[o.estado]}</span><br>${esc(o.detalle)}${o.motivo?`<br><small class="mut">${esc(o.motivo)}</small>`:''}
+      ${(o.imgs||[]).length ? `<div class="fotos">${o.imgs.map(im=>`<img src="${im.mini}" alt="Foto del informe">`).join('')}</div>` : ''}
+      <br><button class="link" data-orig="${esc(o.id)}">Ver texto original del informe</button>
+      <pre class="orig" id="orig-${esc(o.id)}" style="display:none">${esc(o.original)}</pre></div>`).join('');
+    return fila + `<tr class="detalle"><td colspan="10"><div class="nota" style="margin-bottom:4px">La página sugiere: <b>${ESTADOS[r.auto]}</b>. Revisá los informes de abajo y verificá el estado con el selector de la columna Estado.</div>${det}
+      <label class="nota">Nota del analista (sale en las descargas): <input type="text" data-nota="${esc(r.k)}" value="${esc(r.nota)}" size="60"></label></td></tr>`;
+  }).join('');
+}
+
+/* ===================== Descargas ===================== */
+function paraDescargar(){
+  const ok = {repeticion:$('dRep').checked, pendiente:$('dPend').checked, incompleto:$('dInc').checked, solucionado:$('dSol').checked, informativo:$('dInf').checked};
+  return RES.filter(r => ok[r.estado]);
+}
+function nombreBase(){
+  const f = S.informes.filter(i=>i.fecha).map(i=>i.fecha).sort();
+  const b = norm($('barrio').value).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  const per = f.length ? (f[0]===f[f.length-1] ? fmtCorta(f[0]) : fmtCorta(f[0])+'_al_'+fmtCorta(f[f.length-1])).replace(/\//g,'-') : 'sin_fecha';
+  return (b ? b+'_' : '') + 'novedades_' + per;
+}
+function textoPeriodo(){
+  const f = S.informes.filter(i=>i.fecha).map(i=>i.fecha).sort();
+  return f.length ? (f[0]===f[f.length-1] ? fmtF(f[0]) : `${fmtF(f[0])} al ${fmtF(f[f.length-1])}`) : '';
+}
+async function guardar(nombre, blob){
+  try{
+    if (window.claude && typeof window.claude.use === 'function'){
+      const dl = await window.claude.use('downloads');
+      const data = new Uint8Array(await blob.arrayBuffer());
+      await dl.save({filename: nombre, data});
+      return;
+    }
+  }catch(e){ console.warn('descarga del entorno no disponible', e); }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const COLOR = {incompleto:'ECE6FB', repeticion:'FFF1C2', solucionado:'E3F4E8', pendiente:'FBE5E3', informativo:'ECEEF2'};
+const COLOR_T = {incompleto:'5B3FA8', repeticion:'8A6100', solucionado:'1E7A3C', pendiente:'B3261E', informativo:'5B6270'};
+function textoVerif(r){
+  if (!r.verif) return 'Sin verificar (sugerido por la página)';
+  return `Verificado a mano el ${r.verif.cuando}` + (r.verif.estado !== r.auto ? ` (la página sugería ${ESTADOS[r.auto]})` : '');
+}
+async function descargarXlsx(){
+  const l = paraDescargar();
+  if (!l.length){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Resumen', {views:[{state:'frozen', ySplit:3}]});
+  ws.getCell('A1').value = ($('barrio').value ? $('barrio').value + ' – ' : '') + 'Resumen de novedades – ' + textoPeriodo();
+  ws.getCell('A1').font = {bold:true, size:13};
+  const c = {repeticion:0, pendiente:0, incompleto:0, solucionado:0, informativo:0}; l.forEach(r=>c[r.estado]++);
+  ws.getCell('A2').value = `Total: ${l.length} · Repeticiones: ${c.repeticion} · Pendientes: ${c.pendiente} · Incompletas: ${c.incompleto} · Solucionadas: ${c.solucionado} · Informativas: ${c.informativo}`;
+  const cols = [['Fecha',11],['Turno',8],['Hora',7],['Origen',16],['Tipo',24],['Lugar',24],['Novedad',60],['Estado',13],['Verificación',30],['Seguimiento',55],['Nota del analista',35]];
+  ws.getRow(3).values = cols.map(c=>c[0]);
+  cols.forEach((c,i)=> ws.getColumn(i+1).width = c[1]);
+  ws.getRow(3).font = {bold:true}; ws.getRow(3).eachCell(cl => cl.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFDFE3EA'}});
+  l.forEach(r => {
+    const row = ws.addRow([fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado], textoVerif(r), r.seguimiento, r.nota]);
+    row.alignment = {vertical:'top', wrapText:true};
+    const e = row.getCell(8); e.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF'+COLOR[r.estado]}}; e.font = {bold:true, color:{argb:'FF'+COLOR_T[r.estado]}};
+  });
+  ws.autoFilter = {from:'A3', to:'K3'};
+  if ($('dOcurr').checked){
+    const w2 = wb.addWorksheet('Detalle por informe', {views:[{state:'frozen', ySplit:1}]});
+    const c2 = [['Fecha informe',12],['Turno',8],['Hora',7],['Origen',16],['Referencia',18],['Tipo',24],['Lugar',24],['Novedad',60],['Estado en ese informe',18],['Observación',50]];
+    w2.getRow(1).values = c2.map(c=>c[0]); c2.forEach((c,i)=> w2.getColumn(i+1).width=c[1]); w2.getRow(1).font={bold:true};
+    for (const r of l) for (const o of r.ocs){
+      const row = w2.addRow([fmtF(o.fechaInf), o.turno, o.hora||'', o.origen, o.ref, o.tipo, o.lugar, o.detalle, ESTADOS[o.estado], o.resueltoPor || o.vinculo || o.motivo || '']);
+      row.alignment = {vertical:'top', wrapText:true};
+      row.getCell(9).font = {color:{argb:'FF'+COLOR_T[o.estado]}};
+    }
+  }
+  const w3 = wb.addWorksheet('Informes cargados');
+  w3.getRow(1).values = ['Archivo','Formato','Origen','Fecha','Turno','Novedades leídas'];
+  w3.getRow(1).font = {bold:true}; [40,26,18,12,8,16].forEach((w,i)=>w3.getColumn(i+1).width=w);
+  S.informes.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(i => w3.addRow([i.archivo, i.formato, i.origen, fmtF(i.fecha), i.turno, i.novedades.length]));
+  const buf = await wb.xlsx.writeBuffer();
+  await guardar(nombreBase()+'.xlsx', new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  $('msgDesc').textContent = 'Excel generado.';
+}
+async function descargarPdf(){
+  const l = paraDescargar();
+  if (!l.length){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const W = doc.internal.pageSize.getWidth();
+  doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Resumen de novedades', 12, 14);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(`Período: ${textoPeriodo()}`, 12, 20);
+  const c = {repeticion:0, pendiente:0, incompleto:0, solucionado:0, informativo:0}; l.forEach(r=>c[r.estado]++);
+  doc.text(`Total: ${l.length}   Repeticiones: ${c.repeticion}   Pendientes: ${c.pendiente}   Incompletas: ${c.incompleto}   Solucionadas: ${c.solucionado}   Informativas: ${c.informativo}`, 12, 25);
+  const rgb = h => [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  doc.autoTable({
+    startY: 29, margin:{left:10, right:10, top:16},
+    head: [['Fecha','Turno','Hora','Origen','Tipo','Lugar','Novedad','Estado','Seguimiento']],
+    body: l.map(r => [fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado] + (r.verif ? '\n(verificado)' : ''), [r.verif ? textoVerif(r) : '', r.seguimiento, r.nota ? 'Nota: '+r.nota : ''].filter(Boolean).join(' · ')]),
+    styles: {fontSize:7.5, cellPadding:1.5, valign:'top', overflow:'linebreak'},
+    headStyles: {fillColor:[31,78,140], textColor:255, fontStyle:'bold'},
+    columnStyles: {0:{cellWidth:17},1:{cellWidth:12},2:{cellWidth:10},3:{cellWidth:20},4:{cellWidth:28},5:{cellWidth:28},6:{cellWidth:75},7:{cellWidth:20},8:{cellWidth:'auto'}},
+    didParseCell: d => { if (d.section==='body' && d.column.index===7){ const e = l[d.row.index].estado; d.cell.styles.fillColor = rgb(COLOR[e]); d.cell.styles.textColor = rgb(COLOR_T[e]); d.cell.styles.fontStyle='bold'; } },
+    didDrawPage: () => {
+      const b = $('barrio').value;
+      if (b){ doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(b, W-12, 10, {align:'right'}); }
+    }
+  });
+  const n = doc.internal.getNumberOfPages();
+  for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(8); doc.text(`Página ${i} de ${n}`, W-12, doc.internal.pageSize.getHeight()-6, {align:'right'}); }
+  await guardar(nombreBase()+'.pdf', doc.output('blob'));
+  $('msgDesc').textContent = 'PDF generado.';
+}
+
+/* ===================== Eventos ===================== */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('activa', x===b));
+  document.querySelectorAll('.solapa').forEach(s=>s.classList.toggle('activa', s.id===b.dataset.s));
+});
+const zona = $('zona');
+zona.onclick = () => $('archivo').click();
+$('archivo').onchange = e => { cargarArchivos(e.target.files); e.target.value=''; };
+zona.ondragover = e => { e.preventDefault(); zona.classList.add('encima'); };
+zona.ondragleave = () => zona.classList.remove('encima');
+zona.ondrop = e => { e.preventDefault(); zona.classList.remove('encima'); cargarArchivos(e.dataTransfer.files); };
+$('tInformes').addEventListener('click', e => {
+  const q = e.target.dataset.quitar; if (!q) return;
+  S.informes = S.informes.filter(i=>i.id!==q); renderTodo();
+});
+$('tInformes').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.orig){ const i = S.informes.find(x=>x.id===t.dataset.orig); i.origen = t.value.trim() || i.formato; renderTodo(); }
+  if (t.dataset.turno){ const i = S.informes.find(x=>x.id===t.dataset.turno); i.turno = t.value; renderTodo(); }
+});
+$('tResumen').addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset.abrir){ S.abiertos.has(t.dataset.abrir) ? S.abiertos.delete(t.dataset.abrir) : S.abiertos.add(t.dataset.abrir); renderResumen(); }
+  if (t.dataset.orig){ const p = document.getElementById('orig-'+t.dataset.orig); p.style.display = p.style.display==='none' ? '' : 'none'; }
+});
+$('tResumen').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.est !== undefined){
+    const k = t.dataset.est, r = RES.find(x => x.k === k);
+    const d = new Date(), cuando = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    if (!t.value) delete S.manual[k];
+    else S.manual[k] = {estado: t.value === '__ok' ? r.auto : t.value, cuando};
+    renderTodo();
+  }
+  if (t.dataset.nota !== undefined){ S.notas[t.dataset.nota] = t.value.trim(); renderTodo(); }
+});
+['fEstado','fOrigen','fTurno','fVerif','fPendPrimero'].forEach(id => $(id).onchange = renderResumen);
+$('fTexto').oninput = renderResumen;
+$('bXlsx').onclick = () => descargarXlsx().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el Excel: '+e.message; });
+$('bPdf').onclick = () => descargarPdf().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el PDF: '+e.message; });
+window.addEventListener('beforeunload', e => { if (S.informes.length){ e.preventDefault(); e.returnValue=''; } });
+renderTodo();
+</script>
+</body>
+</html>
