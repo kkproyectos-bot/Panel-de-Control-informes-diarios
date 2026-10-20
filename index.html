@@ -100,6 +100,15 @@ pre.orig{white-space:pre-wrap;font:12px/1.4 ui-monospace,Consolas,monospace;back
 .err{color:var(--pend)}
 .chk{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0}
 small.mut{color:var(--muted)}
+.cr-ok{background:var(--ok-bg);color:var(--ok)} .cr-sincausa{background:var(--info-bg);color:var(--ok)} .cr-sinmot{background:var(--rep-bg);color:var(--rep)}
+.cr-noinf{background:var(--pend-bg);color:var(--pend)} .cr-sinreg{background:var(--inc-bg);color:var(--inc)} .cr-sinparte,.cr-fuera{background:var(--info-bg);color:var(--info)}
+tr.c-noinf td:first-child{box-shadow:inset 4px 0 0 var(--pend)} tr.c-sinreg td:first-child{box-shadow:inset 4px 0 0 var(--inc)} tr.c-sinmot td:first-child{box-shadow:inset 4px 0 0 var(--rep-line)}
+textarea{font:12px/1.4 ui-monospace,Consolas,monospace;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;min-height:110px}
+table.cnum td:nth-child(n+3), table.cnum th:nth-child(n+3){text-align:center}
+table.zonas td:nth-child(n+2), table.zonas th:nth-child(n+2){text-align:center}
+table.cnum tr.total td, table.zonas tr.total td{font-weight:700;border-top:2px solid var(--line)}
+.pct{font-weight:700}
+input[type=number]{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 6px;width:70px}
 @media (max-width:700px){main{padding:10px}.zona{padding:16px}}
 </style>
 </head>
@@ -116,7 +125,8 @@ small.mut{color:var(--muted)}
 <nav>
   <button data-s="s1" class="activa">1 · Informes cargados</button>
   <button data-s="s2">2 · Resumen de novedades</button>
-  <button data-s="s3">3 · Descargas</button>
+  <button data-s="sc">3 · Cruce con ALIARA</button>
+  <button data-s="s3">4 · Descargas</button>
 </nav>
 <main>
 <section id="s1" class="solapa activa">
@@ -166,6 +176,55 @@ small.mut{color:var(--muted)}
   </div>
 </section>
 
+<section id="sc" class="solapa">
+  <div class="panel">
+    <h2>Registro de eventos ALIARA</h2>
+    <p class="nota">Pegá las líneas del registro (como salen del sistema: <code>01/09/2026-08:19:11-Alarma en zona 6</code>, o desde Excel con fecha, hora y evento en columnas) o subí el archivo .csv / .txt / .xlsx. Se toman las líneas que empiezan con "Alarma en zona" y "Cable cortado en zona". Nada se guarda.</p>
+    <textarea id="crTexto" placeholder="Pegá acá el registro ALIARA…"></textarea>
+    <div class="barra">
+      <button class="btn sec" id="crArchivoBtn">Subir archivo del registro</button>
+      <input type="file" id="crArchivo" accept=".csv,.txt,.xlsx,text/csv,text/plain" hidden>
+      <label for="crTol">Tolerancia de hora (± minutos)</label> <input type="number" id="crTol" value="30" min="1" max="240">
+      <button class="link" id="crBorrar">Borrar el registro</button>
+    </div>
+    <div id="crEstado" class="nota" style="margin-top:8px"></div>
+  </div>
+  <div id="crVacio" class="aviso">Cargá los informes en la solapa 1 y el registro ALIARA acá arriba para ver el cruce.</div>
+  <div id="crCuerpo" style="display:none">
+    <div class="tarjetas" id="crTarjetas"></div>
+    <div class="panel">
+      <h2>Resumen por turno</h2>
+      <div class="tabla"><table class="cnum">
+        <thead><tr><th>Fecha</th><th>Turno</th><th>En el registro</th><th>Informadas</th><th>Sin informar</th><th>% informado</th><th>Filas del parte</th><th>Sin registro</th><th>Observación</th></tr></thead>
+        <tbody id="crTurnos"></tbody>
+      </table></div>
+    </div>
+    <div class="panel">
+      <h2>Resumen por zona y turno</h2>
+      <div class="tabla"><table class="zonas">
+        <thead><tr><th>Zona</th><th>Día: registro</th><th>Día: informadas</th><th>Noche: registro</th><th>Noche: informadas</th><th>Total</th><th>Sin informar</th><th>% informado</th></tr></thead>
+        <tbody id="crZonas"></tbody>
+      </table></div>
+      <p class="nota">Cuenta sólo los eventos de turnos que tienen el parte cargado.</p>
+    </div>
+    <div class="panel">
+      <div class="filtros">
+        <label>Resultado <select id="crFiltro">
+          <option value="">Todos</option><option value="noinf">Sin informar</option><option value="sinreg">Informadas sin registro</option>
+          <option value="inf">Informadas (todas)</option><option value="ok">Informadas con causa</option><option value="sincausa">Informadas sin causa identificada</option><option value="sinmot">Informadas sin motivo</option>
+          <option value="obs">Con observaciones</option><option value="sinparte">Sin parte cargado</option></select></label>
+        <label>Turno <select id="crTurnoF"><option value="">Ambos</option><option>Día</option><option>Noche</option></select></label>
+        <label>Zona <select id="crZonaF"><option value="">Todas</option></select></label>
+      </div>
+      <div class="tabla"><table>
+        <thead><tr><th>Fecha</th><th>Turno</th><th>Registro ALIARA</th><th>Parte diario</th><th>Dif. (min)</th><th>Resultado</th><th>Observaciones</th></tr></thead>
+        <tbody id="crDetalle"></tbody>
+      </table></div>
+      <p class="nota"><b>Cómo se empareja</b>: cada alarma o corte del registro se une con la fila de la tabla ALIARA de los partes que tenga la misma zona y la hora más cercana, dentro de la tolerancia (hacia antes o hacia después). Se busca en todos los partes cargados, así una alarma del cambio de turno puede estar anotada en el parte del otro turno. Si una fila del parte no dice la zona, se empareja sólo por hora y queda marcado. El turno de cada evento del registro sale de su hora: día de 07:00 a 18:59, noche de 19:00 a 06:59 (la madrugada es del turno noche que empezó el día anterior). <b>Sin parte cargado</b>: el evento es de un turno cuyo parte no se cargó; no cuenta como sin informar.</p>
+    </div>
+  </div>
+</section>
+
 <section id="s3" class="solapa">
   <div class="panel">
     <h2>Descargar el resumen</h2>
@@ -177,6 +236,7 @@ small.mut{color:var(--muted)}
       <label><input type="checkbox" id="dSol" checked> Solucionadas</label>
       <label><input type="checkbox" id="dInf" checked> Informativas</label>
       <label><input type="checkbox" id="dOcurr" checked> Incluir el detalle por informe (Excel)</label>
+      <label><input type="checkbox" id="dCruce" checked> Incluir el cruce con el registro ALIARA</label>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" id="bXlsx">Descargar Excel</button>
@@ -610,8 +670,18 @@ function leerPlanilla(paginas, archivo){
       }
     }
   }
-  // Tablas con hora (ALIARA, recorridos, rondines, cámaras)
-  for (const sec of ['aliara','recorrido','rondin','camaras']){
+  // Tabla ALIARA (lector propio: los encabezados cambian entre turno día y noche)
+  const aliara = [];
+  for (const f of leerTablaAliara(todos.filter(i => i.sec==='aliara'))){
+    const hora = f.hora, mot = f.motivo, zona = f.zona;
+    const pend = !mot || /corte|cortad|da[ñn]|intrus|ingreso|rotur|falla|pendiente/i.test(mot);
+    aliara.push({ fechaEvento: fechaDe(hora), hora, zona, motivo: mot, texto: f.novedad });
+    novedades.push({ ref:'ALIARA', fechaEvento: fechaDe(hora), hora, tipo:'Alarma ALIARA', lugar: zona ? `Zona ${zona}` : '',
+      detalle: cap(f.novedad) + (mot ? ` – ${mot}` : ''), estado: pend ? 'pendiente' : 'solucionado',
+      motivo: mot ? `Verificada: ${mot}` : 'Sin motivo informado', clave: `u|${fecha}|${turno}|aliara|${hora}|${zona||''}`, original: [f.novedad, mot].join('\n') });
+  }
+  // Tablas con hora (recorridos, rondines, cámaras)
+  for (const sec of ['recorrido','rondin','camaras']){
     const its = todos.filter(i => i.sec===sec);
     if (!its.length) continue;
     for (const f of filasPorHora(its)){
@@ -637,7 +707,38 @@ function leerPlanilla(paginas, archivo){
       }
     }
   }
-  return {formato:'Informe diario (planilla)', origen:'Informe diario', fecha, turno, novedades, controles};
+  return {formato:'Informe diario (planilla)', origen:'Informe diario', fecha, turno, novedades, controles, aliara};
+}
+// Tabla ALIARA: una fila por hora; la novedad está a la izquierda de la columna MÓVIL y el motivo bajo MOTIVO.
+// No se toman los nombres del vigilador ni el móvil.
+function leerTablaAliara(its){
+  const esHora = s => /^\d{1,2}[:.]\d{2}$/.test(s.trim());
+  const centro = i => i.x + i.w/2;
+  const filas = [];
+  let motX = null, movX = null;
+  for (const p of [...new Set(its.map(i=>i.p))].sort((a,b)=>a-b)){
+    const del = its.filter(i => i.p === p);
+    const hMot = del.find(i => /^MOTIVO$/i.test(i.s.trim())), hMov = del.find(i => /^M[OÓ]VIL\b/i.test(i.s.trim()));
+    if (hMot) motX = centro(hMot);
+    if (hMov) movX = centro(hMov);
+    const hs = del.filter(i => esHora(i.s));
+    if (!hs.length) continue;
+    const xMin = Math.min(...hs.map(i=>i.x));
+    const anclas = hs.filter(i => i.x <= xMin + 25).sort((a,b)=>b.y-a.y);
+    const yCab = hMot ? hMot.y - 6 : Infinity;
+    const resto = del.filter(i => !anclas.includes(i) && i.y < yCab && !/^(ALIARA|:)$/i.test(i.s.trim()));
+    for (const a of anclas){
+      const mias = resto.filter(i => { const d = Math.abs(i.y - a.y); return d <= 24 && anclas.every(b => b === a || Math.abs(i.y - b.y) >= d); })
+        .sort((x,y) => (y.y - x.y) > 3 ? 1 : (x.y - y.y) > 3 ? -1 : x.x - y.x);
+      const nov = mias.filter(i => (movX == null || centro(i) < movX - 25) && (motX == null || centro(i) < motX - 40)).map(i=>i.s).join(' ').replace(/\s+/g,' ').trim();
+      let mot = motX == null ? '' : mias.filter(i => centro(i) >= motX - 40).map(i=>i.s).join(' ').replace(/\s+/g,' ').trim();
+      if (/^[-–—.\s]*$/.test(mot)) mot = '';
+      if (!nov && !mot) continue;
+      const z = (nov.match(/zona\s*(?:n\s*[°º.]?\s*)?(\d{1,2})\b/i) || [])[1];
+      filas.push({ hora: a.s.trim().replace('.',':').padStart(5,'0'), novedad: nov, motivo: mot, zona: z ? +z : null });
+    }
+  }
+  return filas;
 }
 
 // Asigna renglones a filas: cada fila tiene un ancla; los renglones se reparten en orden,
@@ -884,6 +985,7 @@ function construir(){
     const a = ocs[i], b = ocs[j];
     if (a.inf === b.inf || a.origen !== b.origen) continue;
     if (a.clave.startsWith('c|') || b.clave.startsWith('c|')) continue;
+    if (a.ref === 'ALIARA' || b.ref === 'ALIARA') continue;   // cada alarma es un evento distinto
     const fotos = (a.imgs||[]).some(x => (b.imgs||[]).some(y => distHash(x.hash, y.hash) <= 8));
     if (fotos){ unir(a, b, 'las fotos coinciden'); continue; }
     if (a.estado === 'informativo' || b.estado === 'informativo' || a.tipo !== b.tipo) continue;
@@ -972,9 +1074,192 @@ function palabras(t){ return new Set(norm(t).replace(/[^a-z0-9ñ ]/g,' ').split(
 function simTexto(a, b){ const A = palabras(a), B = palabras(b); if (!A.size || !B.size) return 0; let i = 0; A.forEach(x => { if (B.has(x)) i++; }); return i / (A.size + B.size - i); }
 function horaTurno(h, turno){ if (!h) return 0; const [H,M] = h.split(':').map(Number); let v = H*60+M; if (turno==='Noche' && H < 12) v += 1440; return v; }
 
+/* ===================== Cruce con el registro ALIARA ===================== */
+const CR = { texto:'', eventos:[], lineas:0, desde:null, hasta:null, tol:30 };
+const RCR = {ok:'Informada con causa', sincausa:'Informada sin causa identificada', sinmot:'Informada sin motivo', noinf:'Sin informar', sinreg:'Informada sin registro', sinparte:'Sin parte cargado', fuera:'Fuera del período del registro'};
+const RCR_COLOR = {ok:['E3F4E8','1E7A3C'], sincausa:['ECEEF2','1E7A3C'], sinmot:['FFF1C2','8A6100'], noinf:['FBE5E3','B3261E'], sinreg:['ECE6FB','5B3FA8'], sinparte:['ECEEF2','5B6270'], fuera:['ECEEF2','5B6270']};
+const tsDe = (iso, hora, seg=0) => { const [a,m,d] = iso.split('-').map(Number); const [H,M] = hora.split(':').map(Number); return Date.UTC(a, m-1, d, H, M, seg); };
+const isoTs = ts => new Date(ts).toISOString().slice(0,10);
+const hhmm = (ts, seg) => new Date(ts).toISOString().slice(11, seg ? 19 : 16);
+const fmtTs = ts => fmtCorta(isoTs(ts)) + ' ' + hhmm(ts);
+function turnoDeTs(ts){
+  const h = new Date(ts).getUTCHours();
+  if (h >= 7 && h < 19) return {fecha: isoTs(ts), turno:'Día'};
+  return {fecha: h >= 19 ? isoTs(ts) : isoTs(ts - 864e5), turno:'Noche'};
+}
+function limitesTurno(fecha, turno){ return turno === 'Día' ? [tsDe(fecha,'07:00'), tsDe(fecha,'19:00')] : [tsDe(fecha,'19:00'), tsDe(diaSig(fecha),'07:00')]; }
+function leerRegistro(txt){
+  const ev = []; let lineas = 0, desde = null, hasta = null;
+  for (const raw of (txt||'').split(/\r?\n/)){
+    const l = raw.replace(/"/g,'').trim();
+    const m = l.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[\s\-,;]+(\d{1,2}):(\d{2})(?::(\d{2}))?[\s\-,;]+(.*)$/);
+    if (!m) continue;
+    lineas++;
+    const ts = Date.UTC(+m[3], +m[2]-1, +m[1], +m[4], +m[5], +(m[6]||0));
+    if (desde === null || ts < desde) desde = ts;
+    if (hasta === null || ts > hasta) hasta = ts;
+    const e = m[7].trim(); let z;
+    if ((z = e.match(/^alarma en zona\s*(\d+)/i))) ev.push({ts, tipo:'Alarma', zona:+z[1]});
+    else if ((z = e.match(/^cable cortado en zona\s*(\d+)/i))) ev.push({ts, tipo:'Cable cortado', zona:+z[1]});
+  }
+  ev.sort((a,b)=>a.ts-b.ts);
+  return {ev, lineas, desde, hasta};
+}
+function causaDe(mot){
+  if (!mot) return 'sinmot';
+  if (/sin novedad|^5\/5$|sin causa|no se (detecta|observa)/i.test(mot)) return 'sincausa';
+  return 'ok';
+}
+function cruzar(){
+  const infs = S.informes.filter(i => i.fecha);
+  if (!CR.eventos.length || !infs.length) return null;
+  const tol = CR.tol * 60000;
+  const eventos = CR.eventos.map((e,i) => ({...e, id:'e'+i, min: e.ts - e.ts % 60000, ...turnoDeTs(e.ts)}));
+  const partes = [];
+  for (const inf of infs) (inf.aliara||[]).forEach((a,k) => { if (a.hora && a.fechaEvento) partes.push({...a, id: inf.id+'|a'+k, inf, ts: tsDe(a.fechaEvento, a.hora)}); });
+  const hayParte = (f,t) => infs.some(i => i.fecha === f && i.turno === t);
+  // emparejar: primero misma zona, de la diferencia más chica a la más grande; después las filas sin zona, sólo por hora
+  const par = new Map(), parP = new Map();
+  for (const conZona of [true, false]){
+    const cand = [];
+    for (const p of partes){
+      if (parP.has(p.id) || (conZona ? p.zona == null : p.zona != null)) continue;
+      for (const e of eventos){
+        if (par.has(e.id) || (conZona && e.zona !== p.zona)) continue;
+        const d = p.ts - e.min;
+        if (Math.abs(d) <= tol) cand.push({e, p, d});
+      }
+    }
+    cand.sort((a,b) => Math.abs(a.d) - Math.abs(b.d) || a.e.ts - b.e.ts);
+    for (const c of cand) if (!par.has(c.e.id) && !parP.has(c.p.id)){ par.set(c.e.id, c); parP.set(c.p.id, c); }
+  }
+  const filas = [];
+  for (const e of eventos){
+    const c = par.get(e.id), obs = [];
+    let res;
+    if (c){
+      const p = c.p;
+      res = causaDe(p.motivo);
+      if (p.zona == null) obs.push('El parte no indica la zona: se emparejó sólo por la hora');
+      if (p.inf.fecha !== e.fecha || p.inf.turno !== e.turno) obs.push(`Anotada en el parte del turno ${p.inf.turno.toLowerCase()} del ${fmtCorta(p.inf.fecha)}`);
+      if (e.tipo === 'Cable cortado' && !/cable|cort/i.test(p.texto)) obs.push('En el registro figura como cable cortado; el parte dice activación de alarma');
+      const dm = Math.round(c.d / 60000);
+      if (Math.abs(dm) >= 5) obs.push(`La hora del parte está ${Math.abs(dm)} min ${dm < 0 ? 'antes' : 'después'} que la del registro`);
+    } else res = hayParte(e.fecha, e.turno) ? 'noinf' : 'sinparte';
+    filas.push({ts: e.ts, fecha: e.fecha, turno: e.turno, zona: e.zona, e, p: c ? c.p : null, dif: c ? Math.round(c.d/60000) : null, res, obs});
+  }
+  for (const p of partes) if (!parP.has(p.id)){
+    const fuera = CR.desde === null || p.ts < CR.desde - tol || p.ts > CR.hasta + tol;
+    filas.push({ts: p.ts, fecha: p.inf.fecha, turno: p.inf.turno, zona: p.zona, e: null, p, dif: null, res: fuera ? 'fuera' : 'sinreg',
+      obs: fuera ? ['La hora queda fuera del período que cubre el registro cargado'] : ['No hay una alarma ni un corte de esa zona en el registro dentro de la tolerancia']});
+  }
+  filas.sort((a,b)=>a.ts-b.ts);
+  // por turno
+  const claves = new Map();
+  const add = (f,t) => { const k = f+'|'+t; if (!claves.has(k)) claves.set(k, {fecha:f, turno:t, reg:0, inf:0, noinf:0, filasParte:0, sinreg:0, parte: hayParte(f,t)}); return claves.get(k); };
+  infs.forEach(i => add(i.fecha, i.turno));
+  for (const f of filas){
+    if (f.e){ const t = add(f.fecha, f.turno); t.reg++; if (f.p) t.inf++; else if (f.res === 'noinf') t.noinf++; }
+    if (f.p){ const t = add(f.p.inf.fecha, f.p.inf.turno); t.filasParte++; if (f.res === 'sinreg') t.sinreg++; }
+  }
+  const turnos = [...claves.values()].sort((a,b)=> ordenTurno(a.fecha,a.turno) - ordenTurno(b.fecha,b.turno));
+  for (const t of turnos){
+    const obs = [], [ini, fin] = limitesTurno(t.fecha, t.turno);
+    if (!t.parte) obs.push('No se cargó el parte de este turno');
+    // el registro sólo muestra eventos: se avisa cuando el turno queda entero antes del primero o después del último
+    if (CR.hasta < ini) obs.push(`Turno posterior al último evento del registro (${fmtTs(CR.hasta)}): verificar que el registro cargado lo incluya`);
+    else if (CR.desde >= fin) obs.push(`Turno anterior al primer evento del registro (${fmtTs(CR.desde)}): verificar que el registro cargado lo incluya`);
+    t.obs = obs.join(' · ');
+    t.base = t.parte ? t.reg : 0;
+  }
+  // por zona (sólo turnos con parte)
+  const zonas = new Map();
+  for (const f of filas.filter(f => f.e && f.res !== 'sinparte')){
+    if (!zonas.has(f.zona)) zonas.set(f.zona, {zona:f.zona, dReg:0, dInf:0, nReg:0, nInf:0});
+    const z = zonas.get(f.zona), d = f.turno === 'Día';
+    if (d){ z.dReg++; if (f.p) z.dInf++; } else { z.nReg++; if (f.p) z.nInf++; }
+  }
+  const base = filas.filter(f => f.e && f.res !== 'sinparte');
+  const tot = {
+    base: base.length, inf: base.filter(f=>f.p).length, noinf: base.filter(f=>f.res==='noinf').length,
+    sinreg: filas.filter(f=>f.res==='sinreg').length, ok: filas.filter(f=>f.res==='ok').length,
+    sincausa: filas.filter(f=>f.res==='sincausa').length, sinmot: filas.filter(f=>f.res==='sinmot').length,
+    sinparte: filas.filter(f=>f.res==='sinparte').length, fuera: filas.filter(f=>f.res==='fuera').length
+  };
+  return {filas, turnos, zonas:[...zonas.values()].sort((a,b)=>a.zona-b.zona), tot};
+}
+const pct = (a,b) => b ? (100*a/b).toFixed(1).replace('.',',') + ' %' : '—';
+const txtRegistro = f => f.e ? `${fmtCorta(isoTs(f.e.ts))} ${hhmm(f.e.ts,true)} · ${f.e.tipo} · Zona ${f.e.zona}` : '—';
+const txtParte = f => f.p ? `${fmtCorta(f.p.inf.fecha)} ${f.p.inf.turno.toLowerCase()} · ${f.p.hora} · ${f.p.zona!=null ? 'Zona '+f.p.zona : 'zona no indicada'} · ${f.p.motivo ? 'Motivo: '+f.p.motivo : 'sin motivo'}` : '—';
+let XC = null;
+function renderCruce(){
+  XC = cruzar();
+  const reg = CR.eventos.length;
+  $('crEstado').innerHTML = CR.lineas ? `Registro: ${CR.lineas} líneas leídas, <b>${reg}</b> alarmas y cortes de cable, del ${fmtTs(CR.desde)} al ${fmtTs(CR.hasta)}.`
+    : (CR.texto.trim() ? '<span class="err">No se reconoció ninguna línea con el formato dd/mm/aaaa-hh:mm:ss-Evento.</span>' : '');
+  $('crVacio').style.display = XC ? 'none' : '';
+  $('crCuerpo').style.display = XC ? '' : 'none';
+  if (!XC){
+    $('crVacio').textContent = !reg ? 'Cargá el registro ALIARA acá arriba para ver el cruce.' : 'Cargá los partes diarios en la solapa 1 para ver el cruce.';
+    return;
+  }
+  const t = XC.tot;
+  $('crTarjetas').innerHTML = `
+    <div class="tarjeta"><div class="n">${t.base}</div><div class="t">Alarmas y cortes del registro (turnos con parte)</div></div>
+    <div class="tarjeta ok"><div class="n">${t.inf}</div><div class="t">Informadas · ${pct(t.inf, t.base)}</div></div>
+    <div class="tarjeta pe"><div class="n">${t.noinf}</div><div class="t">Sin informar en el parte</div></div>
+    <div class="tarjeta ic"><div class="n">${t.sinreg}</div><div class="t">Informadas sin registro</div></div>
+    <div class="tarjeta ok"><div class="n">${t.ok}</div><div class="t">Coincidencias con causa</div></div>
+    <div class="tarjeta re"><div class="n">${t.sinmot + t.sincausa}</div><div class="t">Coincidencias sin causa (${t.sinmot} sin motivo, ${t.sincausa} sin causa identificada)</div></div>
+    <div class="tarjeta in"><div class="n">${t.sinparte}</div><div class="t">Eventos de turnos sin parte cargado</div></div>`;
+  const sumT = k => XC.turnos.reduce((a,x)=>a+x[k],0);
+  $('crTurnos').innerHTML = XC.turnos.map(x => `<tr class="${x.noinf ? 'c-noinf' : ''}"><td>${fmtF(x.fecha)}</td><td>${x.turno}</td>
+    <td>${x.reg}</td><td>${x.parte ? x.inf : '—'}</td><td class="n-pend">${x.parte ? (x.noinf || '') : '—'}</td><td class="pct">${x.parte ? pct(x.inf, x.reg) : '—'}</td>
+    <td>${x.parte ? x.filasParte : '—'}</td><td>${x.sinreg || ''}</td><td class="nota">${esc(x.obs)}</td></tr>`).join('') +
+    `<tr class="total"><td colspan="2">Total (turnos con parte)</td><td>${XC.turnos.filter(x=>x.parte).reduce((a,x)=>a+x.reg,0)}</td><td>${sumT('inf')}</td><td>${sumT('noinf')}</td>
+    <td>${pct(t.inf, t.base)}</td><td>${sumT('filasParte')}</td><td>${sumT('sinreg')}</td><td></td></tr>`;
+  $('crZonas').innerHTML = XC.zonas.length ? XC.zonas.map(z => { const T = z.dReg + z.nReg, I = z.dInf + z.nInf;
+    return `<tr class="${T>I ? 'c-noinf' : ''}"><td>Zona ${z.zona}</td><td>${z.dReg||''}</td><td>${z.dReg ? z.dInf : ''}</td><td>${z.nReg||''}</td><td>${z.nReg ? z.nInf : ''}</td><td><b>${T}</b></td><td class="n-pend">${T-I||''}</td><td class="pct">${pct(I,T)}</td></tr>`; }).join('') +
+    `<tr class="total"><td>Total</td>${['dReg','dInf','nReg','nInf'].map(k=>`<td>${XC.zonas.reduce((a,z)=>a+z[k],0)}</td>`).join('')}<td>${t.base}</td><td>${t.noinf}</td><td>${pct(t.inf,t.base)}</td></tr>`
+    : '<tr><td colspan="8" class="nota">No hay eventos del registro en turnos con parte cargado.</td></tr>';
+  const zs = [...new Set(XC.filas.map(f=>f.zona).filter(z=>z!=null))].sort((a,b)=>a-b);
+  const zv = $('crZonaF').value;
+  $('crZonaF').innerHTML = '<option value="">Todas</option>' + zs.map(z=>`<option value="${z}" ${String(z)===zv?'selected':''}>Zona ${z}</option>`).join('');
+  const fr = $('crFiltro').value, ft = $('crTurnoF').value;
+  const l = XC.filas.filter(f => (!ft || f.turno === ft) && (!zv || String(f.zona) === zv) &&
+    (!fr || (fr === 'inf' ? ['ok','sincausa','sinmot'].includes(f.res) : fr === 'obs' ? f.obs.length && f.p && f.e : f.res === fr)));
+  $('crDetalle').innerHTML = l.length ? l.map(f => `<tr class="c-${f.res}"><td>${fmtF(f.fecha)}</td><td>${f.turno}</td><td>${esc(txtRegistro(f))}</td><td>${esc(txtParte(f))}</td>
+    <td>${f.dif == null ? '' : (f.dif > 0 ? '+' : '') + f.dif}</td><td><span class="estado cr-${f.res}">${RCR[f.res]}</span></td><td class="nota">${esc(f.obs.join(' · '))}</td></tr>`).join('')
+    : '<tr><td colspan="7" class="nota">No hay filas con esos filtros.</td></tr>';
+}
+function cargarRegistro(txt){
+  CR.texto = txt || '';
+  const r = leerRegistro(CR.texto);
+  CR.eventos = r.ev; CR.lineas = r.lineas; CR.desde = r.desde; CR.hasta = r.hasta;
+  renderCruce();
+}
+async function leerArchivoRegistro(f){
+  if (/\.xlsx$/i.test(f.name)){
+    const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
+    const out = [];
+    wb.worksheets.forEach(ws => ws.eachRow(r => {
+      const vals = r.values.slice(1).map(v => {
+        if (v instanceof Date){ const d = v.toISOString(); return `${d.slice(8,10)}/${d.slice(5,7)}/${d.slice(0,4)}-${d.slice(11,19)}`; }
+        return v && typeof v === 'object' ? (v.text || (v.richText||[]).map(x=>x.text).join('') || v.result || '') : (v ?? '');
+      }).map(String);
+      out.push(vals.join('-'));
+    }));
+    return out.join('\n');
+  }
+  const buf = await f.arrayBuffer();
+  let t = new TextDecoder('utf-8').decode(buf);
+  if (t.includes('\uFFFD')) t = new TextDecoder('windows-1252').decode(buf);
+  return t;
+}
+
 /* ===================== Pantallas ===================== */
 let RES = [];
-function renderTodo(){ RES = construir(); renderInformes(); renderResumen(); renderPeriodo(); }
+function renderTodo(){ RES = construir(); renderInformes(); renderResumen(); renderPeriodo(); renderCruce(); }
 function renderPeriodo(){
   const f = S.informes.filter(i=>i.fecha).map(i=>i.fecha).sort();
   $('periodoTxt').textContent = f.length ? `Período cargado: ${fmtF(f[0])}${f[0]!==f[f.length-1]?' al '+fmtF(f[f.length-1]):''}` : '';
@@ -1120,9 +1405,10 @@ function textoVerif(r){
   if (!r.verif) return 'Sin verificar (sugerido por la página)';
   return `Verificado a mano el ${r.verif.cuando}` + (r.verif.estado !== r.auto ? ` (la página sugería ${ESTADOS[r.auto]})` : '');
 }
+const conCruce = () => $('dCruce').checked && !!cruzar();
 async function descargarXlsx(){
   const l = paraDescargar();
-  if (!l.length){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
+  if (!l.length && !conCruce()){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Resumen', {views:[{state:'frozen', ySplit:3}]});
   ws.getCell('A1').value = ($('barrio').value ? $('barrio').value + ' – ' : '') + 'Resumen de novedades – ' + textoPeriodo();
@@ -1171,16 +1457,76 @@ async function descargarXlsx(){
   w3.getRow(1).values = ['Archivo','Formato','Origen','Fecha','Turno','Novedades leídas'];
   w3.getRow(1).font = {bold:true}; [40,26,18,12,8,16].forEach((w,i)=>w3.getColumn(i+1).width=w);
   S.informes.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(i => w3.addRow([i.archivo, i.formato, i.origen, fmtF(i.fecha), i.turno, i.novedades.length]));
+  if (conCruce()) hojasCruce(wb);
   const buf = await wb.xlsx.writeBuffer();
   await guardar(nombreBase()+'.xlsx', new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
   $('msgDesc').textContent = 'Excel generado.';
 }
+function hojasCruce(wb){
+  const X = cruzar(), t = X.tot;
+  const cab = (ws, cols, fila) => { ws.getRow(fila).values = cols.map(c=>c[0]); cols.forEach((c,i)=>ws.getColumn(i+1).width=c[1]);
+    ws.getRow(fila).font = {bold:true}; ws.getRow(fila).eachCell(cl => cl.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFDFE3EA'}}); };
+  const w1 = wb.addWorksheet('Cruce ALIARA');
+  w1.getCell('A1').value = ($('barrio').value ? $('barrio').value + ' – ' : '') + 'Cruce del registro ALIARA con los partes diarios – ' + textoPeriodo();
+  w1.getCell('A1').font = {bold:true, size:13};
+  w1.getCell('A2').value = `Registro del ${fmtTs(CR.desde)} al ${fmtTs(CR.hasta)} · Tolerancia ±${CR.tol} min, misma zona · Turno día 07:00 a 18:59, noche 19:00 a 06:59`;
+  w1.getCell('A3').value = `Alarmas y cortes en turnos con parte: ${t.base} · Informadas: ${t.inf} (${pct(t.inf,t.base)}) · Sin informar: ${t.noinf} · Informadas sin registro: ${t.sinreg} · Con causa: ${t.ok} · Sin causa identificada: ${t.sincausa} · Sin motivo: ${t.sinmot} · Sin parte cargado: ${t.sinparte}`;
+  cab(w1, [['Fecha',11],['Turno',8],['En el registro',14],['Informadas',12],['Sin informar',12],['% informado',12],['Filas del parte',14],['Sin registro',12],['Observación',60]], 5);
+  X.turnos.forEach(x => { const r = w1.addRow([fmtF(x.fecha), x.turno, x.reg, x.parte ? x.inf : '—', x.parte ? x.noinf : '—', x.parte ? pct(x.inf,x.reg) : '—', x.parte ? x.filasParte : '—', x.sinreg, x.obs]);
+    r.alignment = {vertical:'top', wrapText:true}; if (x.noinf) r.getCell(5).font = {bold:true, color:{argb:'FFB3261E'}}; });
+  const w2 = wb.addWorksheet('Cruce ALIARA por zona');
+  cab(w2, [['Zona',10],['Día: registro',14],['Día: informadas',15],['Noche: registro',15],['Noche: informadas',17],['Total',8],['Sin informar',12],['% informado',12]], 1);
+  X.zonas.forEach(z => { const T = z.dReg+z.nReg, I = z.dInf+z.nInf; w2.addRow([`Zona ${z.zona}`, z.dReg, z.dInf, z.nReg, z.nInf, T, T-I, pct(I,T)]); });
+  w2.addRow(['Total', ...['dReg','dInf','nReg','nInf'].map(k=>X.zonas.reduce((a,z)=>a+z[k],0)), t.base, t.noinf, pct(t.inf,t.base)]).font = {bold:true};
+  w2.addRow([]); w2.addRow(['Cuenta sólo los eventos de turnos con el parte cargado.']);
+  const w3 = wb.addWorksheet('Cruce ALIARA detalle', {views:[{state:'frozen', ySplit:1}]});
+  cab(w3, [['Fecha',11],['Turno',8],['Registro: fecha y hora',20],['Registro: evento',15],['Zona',7],['Parte: informe',16],['Parte: hora',11],['Parte: zona',11],['Parte: motivo',28],['Dif. (min)',10],['Resultado',30],['Observaciones',60]], 1);
+  for (const f of X.filas){
+    const r = w3.addRow([fmtF(f.fecha), f.turno, f.e ? fmtCorta(isoTs(f.e.ts))+' '+hhmm(f.e.ts,true) : '', f.e ? f.e.tipo : '', f.zona ?? '', f.p ? `${fmtCorta(f.p.inf.fecha)} ${f.p.inf.turno.toLowerCase()}` : '',
+      f.p ? f.p.hora : '', f.p ? (f.p.zona ?? 'no indicada') : '', f.p ? (f.p.motivo || 'sin motivo') : '', f.dif ?? '', RCR[f.res], f.obs.join(' · ')]);
+    r.alignment = {vertical:'top', wrapText:true};
+    const c = r.getCell(11), [bg, fg] = RCR_COLOR[f.res];
+    c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF'+bg}}; c.font = {bold:true, color:{argb:'FF'+fg}};
+  }
+}
+function paginaCruce(doc, nueva){
+  const X = cruzar(), t = X.tot, W = doc.internal.pageSize.getWidth();
+  if (nueva) doc.addPage();
+  doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Cruce del registro ALIARA con los partes diarios', 12, 14);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(`Registro del ${fmtTs(CR.desde)} al ${fmtTs(CR.hasta)} · Misma zona, tolerancia ±${CR.tol} min · Turno día 07:00 a 18:59, noche 19:00 a 06:59`, 12, 20);
+  doc.text(`Alarmas y cortes en turnos con parte: ${t.base}   Informadas: ${t.inf} (${pct(t.inf,t.base)})   Sin informar: ${t.noinf}   Informadas sin registro: ${t.sinreg}   Con causa: ${t.ok}   Sin causa identificada: ${t.sincausa}   Sin motivo: ${t.sinmot}   Sin parte cargado: ${t.sinparte}`, 12, 25, {maxWidth: W-24});
+  const est = {fontSize:7.5, cellPadding:1.3, valign:'top'}, hs = {fillColor:[31,78,140], textColor:255};
+  const sumT = k => X.turnos.reduce((a,x)=>a+x[k],0);
+  doc.autoTable({ startY: 31, margin:{left:10, right:10, top:16}, styles: est, headStyles: hs,
+    head: [['Fecha','Turno','En el registro','Informadas','Sin informar','% informado','Filas del parte','Sin registro','Observación']],
+    body: [...X.turnos.map(x => [fmtF(x.fecha), x.turno, x.reg, x.parte ? x.inf : '—', x.parte ? (x.noinf||'') : '—', x.parte ? pct(x.inf,x.reg) : '—', x.parte ? x.filasParte : '—', x.sinreg||'', x.obs]),
+      ['Total','', X.turnos.filter(x=>x.parte).reduce((a,x)=>a+x.reg,0), sumT('inf'), sumT('noinf'), pct(t.inf,t.base), sumT('filasParte'), sumT('sinreg'), '']],
+    columnStyles: {2:{halign:'center'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center'},6:{halign:'center'},7:{halign:'center'},8:{cellWidth:90}},
+    didParseCell: d => { if (d.section==='body' && d.row.index === X.turnos.length) d.cell.styles.fontStyle='bold'; if (d.section==='body' && d.column.index===4 && typeof d.cell.raw === 'number' && d.cell.raw) { d.cell.styles.textColor=[179,38,30]; d.cell.styles.fontStyle='bold'; } } });
+  doc.autoTable({ startY: doc.lastAutoTable.finalY + 5, margin:{left:10, right:10, top:16}, tableWidth: 170, styles: est, headStyles: hs,
+    head: [['Zona','Día: registro','Día: informadas','Noche: registro','Noche: informadas','Total','Sin informar','% informado']],
+    body: [...X.zonas.map(z => { const T = z.dReg+z.nReg, I = z.dInf+z.nInf; return ['Zona '+z.zona, z.dReg||'', z.dReg ? z.dInf : '', z.nReg||'', z.nReg ? z.nInf : '', T, T-I||'', pct(I,T)]; }),
+      ['Total', ...['dReg','dInf','nReg','nInf'].map(k=>X.zonas.reduce((a,z)=>a+z[k],0)), t.base, t.noinf, pct(t.inf,t.base)]],
+    columnStyles: Object.fromEntries([1,2,3,4,5,6,7].map(i=>[i,{halign:'center'}])),
+    didParseCell: d => { if (d.section==='body' && d.row.index === X.zonas.length) d.cell.styles.fontStyle='bold'; } });
+  const rgb = h => [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  doc.addPage();
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('Detalle del cruce', 12, 14);
+  doc.autoTable({ startY: 18, margin:{left:10, right:10, top:16}, styles: est, headStyles: hs,
+    head: [['Fecha','Turno','Registro ALIARA','Parte diario','Dif. (min)','Resultado','Observaciones']],
+    body: X.filas.map(f => [fmtF(f.fecha), f.turno, txtRegistro(f), txtParte(f), f.dif == null ? '' : (f.dif>0?'+':'')+f.dif, RCR[f.res], f.obs.join(' · ')]),
+    columnStyles: {0:{cellWidth:17},1:{cellWidth:12},2:{cellWidth:45},3:{cellWidth:70},4:{cellWidth:13,halign:'center'},5:{cellWidth:32},6:{cellWidth:'auto'}},
+    didParseCell: d => { if (d.section==='body' && d.column.index===5){ const [bg,fg] = RCR_COLOR[X.filas[d.row.index].res]; d.cell.styles.fillColor = rgb(bg); d.cell.styles.textColor = rgb(fg); d.cell.styles.fontStyle='bold'; } },
+    didDrawPage: () => { const b = $('barrio').value; if (b){ doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(b, W-12, 10, {align:'right'}); } } });
+}
 async function descargarPdf(){
   const l = paraDescargar();
-  if (!l.length){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
+  if (!l.length && !conCruce()){ $('msgDesc').textContent = 'No hay novedades para descargar con esas opciones.'; return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const W = doc.internal.pageSize.getWidth();
+  if (l.length){
   doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Resumen de novedades', 12, 14);
   doc.setFontSize(10); doc.setFont('helvetica','normal');
   doc.text(`Período: ${textoPeriodo()}`, 12, 20);
@@ -1231,6 +1577,8 @@ async function descargarPdf(){
       if (b){ doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(b, W-12, 10, {align:'right'}); }
     }
   });
+  }
+  if (conCruce()) paginaCruce(doc, l.length > 0);
   const n = doc.internal.getNumberOfPages();
   for (let i=1;i<=n;i++){ doc.setPage(i); doc.setFontSize(8); doc.text(`Página ${i} de ${n}`, W-12, doc.internal.pageSize.getHeight()-6, {align:'right'}); }
   await guardar(nombreBase()+'.pdf', doc.output('blob'));
@@ -1287,7 +1635,16 @@ $('tResumen').addEventListener('change', e => {
 $('fTexto').oninput = renderResumen;
 $('bXlsx').onclick = () => descargarXlsx().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el Excel: '+e.message; });
 $('bPdf').onclick = () => descargarPdf().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el PDF: '+e.message; });
-window.addEventListener('beforeunload', e => { if (S.informes.length){ e.preventDefault(); e.returnValue=''; } });
+let tReg = null;
+$('crTexto').oninput = () => { clearTimeout(tReg); tReg = setTimeout(() => cargarRegistro($('crTexto').value), 300); };
+$('crArchivoBtn').onclick = () => $('crArchivo').click();
+$('crArchivo').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try{ const t = await leerArchivoRegistro(f); $('crTexto').value = t; cargarRegistro(t); }
+  catch(err){ console.error(err); $('crEstado').innerHTML = '<span class="err">No se pudo leer el archivo ('+esc(err.message)+').</span>'; } };
+$('crTol').onchange = () => { const v = parseInt($('crTol').value, 10); CR.tol = v > 0 ? v : 30; $('crTol').value = CR.tol; renderCruce(); };
+$('crBorrar').onclick = () => { $('crTexto').value = ''; cargarRegistro(''); };
+['crFiltro','crTurnoF','crZonaF'].forEach(id => $(id).onchange = renderCruce);
+window.addEventListener('beforeunload', e => { if (S.informes.length || CR.eventos.length){ e.preventDefault(); e.returnValue=''; } });
 renderTodo();
 </script>
 </body>
