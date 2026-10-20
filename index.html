@@ -74,6 +74,15 @@ tr.f-incompleto td:first-child{box-shadow:inset 4px 0 0 var(--inc)}
 tr.f-repeticion td:first-child{box-shadow:inset 4px 0 0 var(--rep-line)}
 tr.f-repeticion td{background:color-mix(in srgb, var(--rep-bg) 45%, transparent)}
 .tarjeta.re .n{color:var(--rep)}
+tr.capitulo td{background:var(--accent);color:#fff;font-weight:700;letter-spacing:.02em;font-size:13px}
+tr.categoria td{background:var(--accent-soft);color:var(--accent);font-weight:700}
+tr.categoria .cnt{font-weight:400;color:var(--muted)}
+tr.categoria .estado{margin-left:2px}
+table.porcat td:nth-child(n+2), table.porcat th:nth-child(n+2){text-align:center}
+table.porcat tr.sel td{background:var(--accent-soft)}
+table.porcat tr.total td{font-weight:700;border-top:2px solid var(--line)}
+table.porcat .n-rep{color:var(--rep);font-weight:600} table.porcat .n-pend{color:var(--pend);font-weight:600} table.porcat .n-inc{color:var(--inc);font-weight:600} table.porcat .n-ok{color:var(--ok);font-weight:600} table.porcat .n-inf{color:var(--info)}
+.codcat{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:0 5px}
 .fotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.fotos img{height:90px;border:1px solid var(--line);border-radius:4px}
 tr.f-solucionado td:first-child{box-shadow:inset 4px 0 0 var(--ok)}
 tr.f-pendiente td:first-child{box-shadow:inset 4px 0 0 var(--pend)}
@@ -131,7 +140,17 @@ small.mut{color:var(--muted)}
   <div id="avisoUno" class="aviso" style="display:none"></div>
   <div class="tarjetas" id="tarjetas"></div>
   <div class="panel">
+    <h2>Resumen por categoría del informe mensual</h2>
+    <div class="tabla"><table class="porcat">
+      <thead><tr><th>Categoría</th><th>Total</th><th>Repetición</th><th>Pendiente</th><th>Incompleto</th><th>Solucionado</th><th>Informativo</th></tr></thead>
+      <tbody id="tPorCat"></tbody>
+    </table></div>
+    <p class="nota">Hacé clic en una categoría para ver sólo esas novedades. La categoría la asigna la página según el tipo y el texto de la novedad; se puede cambiar en el detalle de cada fila.</p>
+  </div>
+  <div class="panel">
     <div class="filtros">
+      <label>Ver <select id="fAgrupar"><option value="cat">Agrupado por categoría</option><option value="crono">Cronológico (sin agrupar)</option></select></label>
+      <label>Categoría <select id="fCat"><option value="">Todas</option></select></label>
       <label>Estado <select id="fEstado"><option value="">Todos</option><option value="repeticion">Repeticiones</option><option value="pendiente">Pendientes</option><option value="incompleto">Incompletas (falta información)</option><option value="solucionado">Solucionadas</option><option value="informativo">Informativas</option></select></label>
       <label>Origen <select id="fOrigen"><option value="">Todos</option></select></label>
       <label>Turno <select id="fTurno"><option value="">Ambos</option><option>Día</option><option>Noche</option></select></label>
@@ -171,7 +190,7 @@ small.mut{color:var(--muted)}
 <script>
 /* ===================== Estado general ===================== */
 const ESTADOS = {repeticion:'Repetición', pendiente:'Pendiente', incompleto:'Incompleto', solucionado:'Solucionado', informativo:'Informativo'};
-const S = { informes: [], manual: {}, notas: {}, abiertos: new Set() };
+const S = { informes: [], manual: {}, notas: {}, cats: {}, abiertos: new Set(), agrupar: true };
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 const $ = id => document.getElementById(id);
@@ -283,7 +302,7 @@ function armarLineas(items, tol=2.6){
 
 /* ===================== Datos personales fuera del resumen ===================== */
 function limpiar(t){
-  const NOMBRE = "(?:(?:de|del|la|los|y)\\s+)?[A-ZÁÉÍÓÚÑÜ][A-Za-záéíóúñüÁÉÍÓÚÑÜ'\\-]+";
+  const NOMBRE = "(?:(?:de|del|la|los|y)\\s+)?(?!(?:UF|GS|HP|DNI|Puesto|Zona|Etapa|Lote)\\b)[A-ZÁÉÍÓÚÑÜ][A-Za-záéíóúñüÁÉÍÓÚÑÜ'\\-]+";
   const NOMBRES = `(?:${NOMBRE},?\\s*){1,6}`;
   const art = a => ({el:'', la:'', al:'a ', del:'de '})[(a||'').trim().toLowerCase()] || '';
   t = (t||'').replace(/\s+/g,' ');
@@ -307,6 +326,72 @@ function limpiar(t){
   return cap(t);
 }
 function primeraOracion(t){ const m=(t||'').replace(/\s+/g,' ').match(/^(.+?\.)(\s|$)/); return m?m[1]:(t||''); }
+
+/* ===================== Categorías del informe mensual de auditoría ===================== */
+// Apartados tal como figuran en el informe mensual. "7" = novedades de seguridad sin subapartado propio.
+const CAPITULOS = {'1':'1. AUDITORÍA Y SUPERVISIÓN','2':'2. NOVEDADES DE DOCUMENTACIÓN Y PERSONAL','3':'3. NOVEDADES DEL MATERIAL',
+  '4':'4. NOVEDADES DE TECNOLOGÍA','5':'5. CUMPLIMIENTO DE LAS CONSIGNAS','6':'6. CUESTIONES FORMALES','7':'7. NOVEDADES DE SEGURIDAD','9':'SIN CATEGORÍA'};
+const CATEGORIAS = [
+  ['1.1','AUDITORÍAS / REUNIONES EFECTUADAS'], ['1.2','SUPERVISIÓN'],
+  ['2.1','PERSONAL ASIGNADO AL OBJETIVO'], ['2.2','BAJAS Y CAUSAS'], ['2.3','PERSONAL NUEVO – ALTAS'], ['2.4','NOVEDADES CON LA DOCUMENTACIÓN'],
+  ['2.5','NOVEDADES CON LAS HABILITACIONES DEL PERSONAL'], ['2.6','ANTIGÜEDAD DE LOS GS EN LA EMPRESA Y EN EL OBJETIVO'], ['2.7','CAPACITACIONES DEL PERSONAL'], ['2.8','SANCIONES Y CAUSAS'],
+  ['3.1','ARMAMENTO'], ['3.2','COMUNICACIONES'], ['3.3','MÓVILES Y RODADOS'], ['3.4','ELEMENTOS LOGÍSTICOS'], ['3.5','DESFIBRILADOR EXTERNO AUTOMÁTICO (DEA)'], ['3.6','MATAFUEGOS'],
+  ['4.1','PRUEBA DE PULSADORES DE PÁNICO FIJO E INALÁMBRICOS'], ['4.2','SUB-SISTEMA CCTV'], ['4.3','SUB-SISTEMA DETECCIÓN PERIMETRAL (ALIARA)'],
+  ['4.4','SISTEMA DE CONTROL DE ACCESO – OPEN KEY'], ['4.5','BÚNKER / MONITOREO'], ['4.6','SUB-SISTEMA DE POSICIONAMIENTO DINÁMICO'],
+  ['5.1','CONSIGNAS GENERALES'], ['5.2','CONSIGNAS PARTICULARES'], ['5.3','CONOCIMIENTO POR PARTE DEL PERSONAL'], ['5.4','EJERCICIOS Y RESULTADOS'],
+  ['6.1','ESTADO DE LA GUARDIA'], ['6.2','PRESENTACIÓN DEL PERSONAL'], ['6.3','LIBROS DE GUARDIA'], ['6.4','REUNIONES EFECTUADAS'], ['6.5','ACTAS DE INCUMPLIMIENTO DE LA PRESTADORA'],
+  ['7.1','PERÍMETRO DEL PREDIO'], ['7.2','REDUCTORES DE VELOCIDAD'], ['7','OTRAS NOVEDADES DE SEGURIDAD (sin subapartado)'],
+  ['9','SIN CATEGORÍA']
+];
+const CAT = Object.fromEntries(CATEGORIAS);
+const ordenCat = c => CATEGORIAS.findIndex(x => x[0] === c);
+const nombreCat = c => c === '7' ? '7. OTRAS NOVEDADES DE SEGURIDAD (sin subapartado)' : c === '9' ? 'SIN CATEGORÍA' : `${c}. ${CAT[c]}`;
+const capituloDe = c => CAPITULOS[c.split('.')[0]];
+// Reglas por palabras clave (se prueban en orden; gana la primera)
+const REGLAS_CAT = [
+  ['4.3', /aliara|activaci[oó]n de alarma|alarma (perimetral|en zona|zona)|corte de cable/],
+  ['4.4', /face ?id|reconocimiento facial|open ?key|barreras?\b|lectoras?\b|molinete|\bqr\b/],
+  ['4.1', /p[aá]nico|pulsador/],
+  ['4.6', /\bgps\b|posicionamiento|ituran|rastreo/],
+  ['4.5', /b[uú]nker|videowall|video wall|estabilizador|joystick|escal[oó]n/],
+  ['3.5', /\bdea\b|desfibrilador/],
+  ['3.6', /matafuego|extintor/],
+  ['3.1', /\barma\b|armamento|lanzadora|chaleco|munici[oó]n|cartucher/],
+  ['3.2', /\bht\b|handy|equipo de comunicaci|\bradio\b|zello|ligaz[oó]n/],
+  ['3.3', /\bkwid\b|rodado|dvr|m[oó]vil (asignado|del servicio|presenta|con falla|sin)|cuatriciclo (presenta|con falla|sin luz|averiad|fuera de servicio)|colisi[oó]n del m[oó]vil|choque del m[oó]vil|cambio de aceite|neum[aá]tico|pinchadura/],
+  ['2.8', /sanci[oó]n|apercib|suspensi[oó]n|pedido de informe/],
+  ['2.7', /capacitaci/],
+  ['2.2', /\bbaja\b|renuncia|despido/],
+  ['2.3', /\balta\b|personal nuevo/],
+  ['2.1', /a\.?s\.?a\b|no se present|ausen|cubierto moment|llegada tarde|falta (con|sin) aviso|dotaci[oó]n/],
+  ['7.1', /luminari|reflector/],
+  ['4.2', /c[aá]maras?\b|cctv|domos?\b|telara/],
+  ['7.2', /reductor|caballete|lomo de burro/],
+  ['7.1', /per[ií]metro|perimetral|alambr|tejido|pozos?\b|postes?\b|concertina|p[uú]as|port[oó]n(es)? de emergencia|anem[oó]metro|corredor de seguridad/],
+  ['6.3', /libro de guardia/], ['6.1', /orden y limpieza|estado de la guardia/], ['6.2', /uniforme|presentaci[oó]n del personal/],
+  ['5.2', /autorizaci|autorizad|protocolo|dron|filmaci|proveedor|operari|invitad|visita|cami[oó]n|ingreso|acceso/],
+];
+const TIPO_CAT = {
+  'Tránsito / velocidad':'7', 'Abertura en vivienda':'7', 'Hallazgo de objeto':'7', 'Devolución de objeto':'7', 'Animal suelto':'7',
+  'Ruidos molestos':'7', 'Incendio / humo':'7', 'Accidente / asistencia médica':'7', 'Reclamo / conflicto':'7',
+  'Falla de Face ID':'4.4', 'Alarma ALIARA':'4.3', 'Personal / ausencia':'2.1',
+  'Ingreso con drones / filmación':'5.2', 'Ingreso / acceso':'5.2'
+};
+function categorizar(n){
+  const tipo = n.tipo || '';
+  const txt = norm([tipo, n.lugar, n.detalle].join(' '));
+  if (/^control:/i.test(tipo)){
+    if (/luminar|luces|reflector/.test(txt)) return '7.1';
+    if (/pozo|anemometro|portones? (de )?emergencia|perimetr|tejido|poste|alambr|concertina/.test(txt)) return '7.1';
+    if (/camara/.test(txt)) return '4.2';
+    return '7';
+  }
+  if (tipo === 'Hurto / intrusión') return /perimetr|zona \d|alambr|tejido/.test(txt) ? '7.1' : '7';
+  if (tipo === 'Alarma') return /aliara|zona \d/.test(txt) ? '4.3' : '7';
+  if (TIPO_CAT[tipo]) return TIPO_CAT[tipo];
+  for (const [c, re] of REGLAS_CAT) if (re.test(txt)) return c;
+  return '7';
+}
 
 /* ===================== Clasificación ===================== */
 const TIPOS = [
@@ -874,7 +959,8 @@ function construir(){
     }
     if (ult.vinculo) seg.push(ult.vinculo);
     const man = S.manual[k];
-    lista.push({ k, ocs:g.ocs, pri, ult, origen: pri.origen, turno: pri.turno, fecha: pri.fechaEvento || pri.fechaInf, hora: pri.hora,
+    const catAuto = categorizar(ult);
+    lista.push({ k, catAuto, cat: S.cats[k] || catAuto, catMano: !!S.cats[k], ocs:g.ocs, pri, ult, origen: pri.origen, turno: pri.turno, fecha: pri.fechaEvento || pri.fechaInf, hora: pri.hora,
       tipo: ult.tipo, lugar: ult.lugar || pri.lugar, detalle: ult.detalle, auto: estado, estado: man ? man.estado : estado, aMano: !!man, verif: man || null,
       seguimiento: [...new Set(seg.filter(Boolean))].join(' · '), nota: S.notas[k] || '' });
   }
@@ -920,11 +1006,12 @@ function renderInformes(){
   $('huecos').innerHTML = txt.length ? 'Informes que faltan en el período: ' + txt.join(' · ') : '';
 }
 function filtrados(){
-  const fe=$('fEstado').value, fo=$('fOrigen').value, ft=$('fTurno').value, fx=norm($('fTexto').value), fv=$('fVerif').value;
-  let l = RES.filter(r => (!fe || r.estado===fe) && (!fv || (fv==='si') === !!r.verif) && (!fo || r.origen===fo) && (!ft || r.turno===ft) &&
-    (!fx || norm([r.tipo,r.lugar,r.detalle,r.seguimiento,r.nota].join(' ')).includes(fx)));
+  const fe=$('fEstado').value, fo=$('fOrigen').value, ft=$('fTurno').value, fx=norm($('fTexto').value), fv=$('fVerif').value, fc=$('fCat').value;
+  let l = RES.filter(r => (!fc || r.cat===fc) && (!fe || r.estado===fe) && (!fv || (fv==='si') === !!r.verif) && (!fo || r.origen===fo) && (!ft || r.turno===ft) &&
+    (!fx || norm([r.tipo,r.lugar,r.detalle,r.seguimiento,r.nota,nombreCat(r.cat)].join(' ')).includes(fx)));
   const pes = {repeticion:0, pendiente:1, incompleto:2, solucionado:3, informativo:4};
   if ($('fPendPrimero').checked) l = l.slice().sort((a,b)=> pes[a.estado]-pes[b.estado] || a.pri.orden-b.pri.orden);
+  if ($('fAgrupar').value === 'cat') l = l.slice().sort((a,b)=> ordenCat(a.cat)-ordenCat(b.cat) || ($('fPendPrimero').checked ? pes[a.estado]-pes[b.estado] : 0) || a.pri.orden-b.pri.orden);
   return l;
 }
 function renderResumen(){
@@ -944,15 +1031,38 @@ function renderResumen(){
   const nInf = S.informes.filter(i=>i.fecha).length;
   $('avisoUno').style.display = nInf ? '' : 'none';
   $('avisoUno').textContent = nInf === 1 ? 'Hay un solo informe cargado: lo pendiente se sigue cuando cargues los informes siguientes.' : `${nInf} informes cargados. Los pendientes se comparan con los informes posteriores del mismo origen.`;
+  // resumen por categoría
+  const cats = [...new Set(RES.map(r=>r.cat))].sort((a,b)=>ordenCat(a)-ordenCat(b));
+  const fcSel = $('fCat'), fcV = fcSel.value;
+  fcSel.innerHTML = '<option value="">Todas</option>' + cats.map(c=>`<option value="${c}" ${c===fcV?'selected':''}>${esc(nombreCat(c))}</option>`).join('');
+  let capAnt = '';
+  $('tPorCat').innerHTML = cats.length ? cats.map(c => {
+    const rs = RES.filter(r=>r.cat===c), n = e => rs.filter(r=>r.estado===e).length || '';
+    const cap = capituloDe(c), filaCap = cap !== capAnt && c !== '9' ? `<tr class="capitulo"><td colspan="7">${esc(cap)}</td></tr>` : '';
+    capAnt = cap;
+    return filaCap + `<tr class="${c===fcV?'sel':''}"><td><button class="link" data-vercat="${c}">${esc(nombreCat(c))}</button></td><td><b>${rs.length}</b></td>
+      <td class="n-rep">${n('repeticion')}</td><td class="n-pend">${n('pendiente')}</td><td class="n-inc">${n('incompleto')}</td><td class="n-ok">${n('solucionado')}</td><td class="n-inf">${n('informativo')}</td></tr>`;
+  }).join('') + `<tr class="total"><td>Total</td><td><b>${RES.length}</b></td>${['repeticion','pendiente','incompleto','solucionado','informativo'].map(e=>`<td>${RES.filter(r=>r.estado===e).length}</td>`).join('')}</tr>`
+  : '<tr><td colspan="7" class="nota">Cargá informes en la solapa 1.</td></tr>';
   const l = filtrados();
+  const agrupado = $('fAgrupar').value === 'cat';
   const tb = $('tResumen');
   if (!RES.length){ tb.innerHTML = '<tr><td colspan="10" class="nota">Cargá informes en la solapa 1.</td></tr>'; return; }
   if (!l.length){ tb.innerHTML = '<tr><td colspan="10" class="nota">No hay novedades con esos filtros.</td></tr>'; return; }
+  let catAnt = null, capAnt2 = null;
   tb.innerHTML = l.map(r => {
+    let enc = '';
+    if (agrupado && r.cat !== catAnt){
+      const rs = l.filter(x=>x.cat===r.cat), cnt = e => rs.filter(x=>x.estado===e).length;
+      const cap = capituloDe(r.cat);
+      if (cap !== capAnt2 && r.cat !== '9') enc += `<tr class="capitulo"><td colspan="10">${esc(cap)}</td></tr>`;
+      enc += `<tr class="categoria"><td colspan="10">Categoría: ${esc(nombreCat(r.cat))} <span class="cnt">— ${rs.length} novedad${rs.length>1?'es':''}${['repeticion','pendiente','incompleto','solucionado','informativo'].filter(e=>cnt(e)).map(e=>` · <span class="estado e-${e}">${cnt(e)} ${ESTADOS[e].toLowerCase()}</span>`).join('')}</span></td></tr>`;
+      catAnt = r.cat; capAnt2 = cap;
+    }
     const abierto = S.abiertos.has(r.k);
     const fila = `<tr class="f-${r.estado}">
       <td>${fmtF(r.fecha)}</td><td>${r.turno}</td><td>${esc(r.hora||'')}</td><td>${esc(r.origen)}</td>
-      <td>${esc(r.tipo)}</td><td>${esc(r.lugar)}</td><td>${esc(r.detalle)}</td>
+      <td>${agrupado ? '' : `<span class="codcat" title="${esc(nombreCat(r.cat))}">${r.cat === '9' ? '—' : r.cat}</span> `}${esc(r.tipo)}</td><td>${esc(r.lugar)}</td><td>${esc(r.detalle)}</td>
       <td><span class="estado e-${r.estado}">${ESTADOS[r.estado]}</span>
         <br>${r.verif ? `<span class="marca si">✓ Verificado${r.verif.estado !== r.auto ? ` (la página sugería ${ESTADOS[r.auto]})` : ''} · ${r.verif.cuando}</span>` : '<span class="marca no">Sin verificar · lo sugiere la página</span>'}
         <div class="verif"><select data-est="${esc(r.k)}" title="Verificación manual">
@@ -962,13 +1072,17 @@ function renderResumen(){
         </select></div></td>
       <td>${esc(r.seguimiento)}${r.nota?`<br><i>Nota: ${esc(r.nota)}</i>`:''}</td>
       <td><button class="link" data-abrir="${esc(r.k)}">${abierto?'Cerrar':'Detalle'}</button></td></tr>`;
-    if (!abierto) return fila;
+    if (!abierto) return enc + fila;
     const det = r.ocs.map((o,i) => `<div class="ocurr"><b>${fmtCorta(o.fechaInf)} ${o.turno.toLowerCase()}</b> · ${esc(o.hora||'')} · ${esc(o.ref)} ·
       <span class="estado e-${o.estado}">${ESTADOS[o.estado]}</span><br>${esc(o.detalle)}${o.motivo?`<br><small class="mut">${esc(o.motivo)}</small>`:''}
       ${(o.imgs||[]).length ? `<div class="fotos">${o.imgs.map(im=>`<img src="${im.mini}" alt="Foto del informe">`).join('')}</div>` : ''}
       <br><button class="link" data-orig="${esc(o.id)}">Ver texto original del informe</button>
       <pre class="orig" id="orig-${esc(o.id)}" style="display:none">${esc(o.original)}</pre></div>`).join('');
-    return fila + `<tr class="detalle"><td colspan="10"><div class="nota" style="margin-bottom:4px">La página sugiere: <b>${ESTADOS[r.auto]}</b>. Revisá los informes de abajo y verificá el estado con el selector de la columna Estado.</div>${det}
+    return enc + fila + `<tr class="detalle"><td colspan="10">
+      <div class="nota" style="margin-bottom:6px">Categoría del informe mensual:
+        <select data-cat="${esc(r.k)}">${CATEGORIAS.map(([c])=>`<option value="${c}" ${c===r.cat?'selected':''}>${esc(nombreCat(c))}${c===r.catAuto?' (sugerida)':''}</option>`).join('')}</select>
+        ${r.catMano ? '<span class="marca si">✓ asignada a mano</span>' : ''}</div>
+      <div class="nota" style="margin-bottom:4px">La página sugiere: <b>${ESTADOS[r.auto]}</b>. Revisá los informes de abajo y verificá el estado con el selector de la columna Estado.</div>${det}
       <label class="nota">Nota del analista (sale en las descargas): <input type="text" data-nota="${esc(r.k)}" value="${esc(r.nota)}" size="60"></label></td></tr>`;
   }).join('');
 }
@@ -976,7 +1090,7 @@ function renderResumen(){
 /* ===================== Descargas ===================== */
 function paraDescargar(){
   const ok = {repeticion:$('dRep').checked, pendiente:$('dPend').checked, incompleto:$('dInc').checked, solucionado:$('dSol').checked, informativo:$('dInf').checked};
-  return RES.filter(r => ok[r.estado]);
+  return RES.filter(r => ok[r.estado]).sort((a,b)=> ordenCat(a.cat)-ordenCat(b.cat) || a.pri.orden-b.pri.orden);
 }
 function nombreBase(){
   const f = S.informes.filter(i=>i.fecha).map(i=>i.fecha).sort();
@@ -1015,16 +1129,34 @@ async function descargarXlsx(){
   ws.getCell('A1').font = {bold:true, size:13};
   const c = {repeticion:0, pendiente:0, incompleto:0, solucionado:0, informativo:0}; l.forEach(r=>c[r.estado]++);
   ws.getCell('A2').value = `Total: ${l.length} · Repeticiones: ${c.repeticion} · Pendientes: ${c.pendiente} · Incompletas: ${c.incompleto} · Solucionadas: ${c.solucionado} · Informativas: ${c.informativo}`;
-  const cols = [['Fecha',11],['Turno',8],['Hora',7],['Origen',16],['Tipo',24],['Lugar',24],['Novedad',60],['Estado',13],['Verificación',30],['Seguimiento',55],['Nota del analista',35]];
+  const cols = [['Categoría',34],['Fecha',11],['Turno',8],['Hora',7],['Origen',16],['Tipo',24],['Lugar',24],['Novedad',60],['Estado',13],['Verificación',30],['Seguimiento',55],['Nota del analista',35]];
   ws.getRow(3).values = cols.map(c=>c[0]);
   cols.forEach((c,i)=> ws.getColumn(i+1).width = c[1]);
   ws.getRow(3).font = {bold:true}; ws.getRow(3).eachCell(cl => cl.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFDFE3EA'}});
+  let catAnt = null, capAnt = null;
   l.forEach(r => {
-    const row = ws.addRow([fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado], textoVerif(r), r.seguimiento, r.nota]);
+    if (r.cat !== catAnt){
+      const cap = capituloDe(r.cat);
+      if (cap !== capAnt && r.cat !== '9'){
+        const rc = ws.addRow([cap]); ws.mergeCells(rc.number, 1, rc.number, cols.length);
+        rc.font = {bold:true, color:{argb:'FFFFFFFF'}}; rc.getCell(1).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF1F4E8C'}};
+      }
+      const n = l.filter(x=>x.cat===r.cat).length;
+      const rh = ws.addRow([`Categoría: ${nombreCat(r.cat)} (${n})`]); ws.mergeCells(rh.number, 1, rh.number, cols.length);
+      rh.font = {bold:true, color:{argb:'FF1F4E8C'}}; rh.getCell(1).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFE7EEF8'}};
+      catAnt = r.cat; capAnt = cap;
+    }
+    const row = ws.addRow([nombreCat(r.cat) + (r.catMano ? ' (a mano)' : ''), fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado], textoVerif(r), r.seguimiento, r.nota]);
     row.alignment = {vertical:'top', wrapText:true};
-    const e = row.getCell(8); e.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF'+COLOR[r.estado]}}; e.font = {bold:true, color:{argb:'FF'+COLOR_T[r.estado]}};
+    const e = row.getCell(9); e.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF'+COLOR[r.estado]}}; e.font = {bold:true, color:{argb:'FF'+COLOR_T[r.estado]}};
   });
-  ws.autoFilter = {from:'A3', to:'K3'};
+  // hoja de conteo por categoría
+  const wc = wb.addWorksheet('Por categoría');
+  wc.getRow(1).values = ['Categoría','Total','Repetición','Pendiente','Incompleto','Solucionado','Informativo'];
+  wc.getRow(1).font = {bold:true}; [52,8,12,11,12,12,12].forEach((w,i)=>wc.getColumn(i+1).width=w);
+  const est = ['repeticion','pendiente','incompleto','solucionado','informativo'];
+  [...new Set(l.map(r=>r.cat))].forEach(c => { const rs = l.filter(r=>r.cat===c); wc.addRow([nombreCat(c), rs.length, ...est.map(e=>rs.filter(r=>r.estado===e).length)]); });
+  wc.addRow(['Total', l.length, ...est.map(e=>l.filter(r=>r.estado===e).length)]).font = {bold:true};
   if ($('dOcurr').checked){
     const w2 = wb.addWorksheet('Detalle por informe', {views:[{state:'frozen', ySplit:1}]});
     const c2 = [['Fecha informe',12],['Turno',8],['Hora',7],['Origen',16],['Referencia',18],['Tipo',24],['Lugar',24],['Novedad',60],['Estado en ese informe',18],['Observación',50]];
@@ -1055,14 +1187,45 @@ async function descargarPdf(){
   const c = {repeticion:0, pendiente:0, incompleto:0, solucionado:0, informativo:0}; l.forEach(r=>c[r.estado]++);
   doc.text(`Total: ${l.length}   Repeticiones: ${c.repeticion}   Pendientes: ${c.pendiente}   Incompletas: ${c.incompleto}   Solucionadas: ${c.solucionado}   Informativas: ${c.informativo}`, 12, 25);
   const rgb = h => [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  // cuadro resumen por categoría
+  const est = ['repeticion','pendiente','incompleto','solucionado','informativo'];
+  const catsL = [...new Set(l.map(r=>r.cat))];
   doc.autoTable({
-    startY: 29, margin:{left:10, right:10, top:16},
+    startY: 29, margin:{left:10, right:10, top:16}, tableWidth: 190,
+    head: [['Categoría','Total','Repetición','Pendiente','Incompleto','Solucionado','Informativo']],
+    body: [...catsL.map(c => { const rs = l.filter(r=>r.cat===c); return [nombreCat(c), rs.length, ...est.map(e=>rs.filter(r=>r.estado===e).length || '')]; }),
+           ['Total', l.length, ...est.map(e=>l.filter(r=>r.estado===e).length)]],
+    styles: {fontSize:7.5, cellPadding:1.3}, headStyles: {fillColor:[31,78,140], textColor:255},
+    columnStyles: {0:{cellWidth:90}, 1:{halign:'center'}, 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'center'}, 5:{halign:'center'}, 6:{halign:'center'}},
+    didParseCell: d => { if (d.section==='body' && d.row.index === catsL.length) d.cell.styles.fontStyle = 'bold'; }
+  });
+  // detalle agrupado por categoría
+  const filas = [], meta = [];
+  let catAnt = null, capAnt = null;
+  for (const r of l){
+    if (r.cat !== catAnt){
+      const cap = capituloDe(r.cat);
+      if (cap !== capAnt && r.cat !== '9'){ filas.push([{content: cap, colSpan: 9}]); meta.push({tipo:'cap'}); }
+      filas.push([{content: `Categoría: ${nombreCat(r.cat)} (${l.filter(x=>x.cat===r.cat).length})`, colSpan: 9}]); meta.push({tipo:'cat'});
+      catAnt = r.cat; capAnt = cap;
+    }
+    filas.push([fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado] + (r.verif ? '\n(verificado)' : ''), [r.verif ? textoVerif(r) : '', r.seguimiento, r.nota ? 'Nota: '+r.nota : ''].filter(Boolean).join(' · ')]);
+    meta.push({tipo:'fila', r});
+  }
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 6, margin:{left:10, right:10, top:16},
     head: [['Fecha','Turno','Hora','Origen','Tipo','Lugar','Novedad','Estado','Seguimiento']],
-    body: l.map(r => [fmtF(r.fecha), r.turno, r.hora||'', r.origen, r.tipo, r.lugar, r.detalle, ESTADOS[r.estado] + (r.verif ? '\n(verificado)' : ''), [r.verif ? textoVerif(r) : '', r.seguimiento, r.nota ? 'Nota: '+r.nota : ''].filter(Boolean).join(' · ')]),
+    body: filas,
     styles: {fontSize:7.5, cellPadding:1.5, valign:'top', overflow:'linebreak'},
     headStyles: {fillColor:[31,78,140], textColor:255, fontStyle:'bold'},
     columnStyles: {0:{cellWidth:17},1:{cellWidth:12},2:{cellWidth:10},3:{cellWidth:20},4:{cellWidth:28},5:{cellWidth:28},6:{cellWidth:75},7:{cellWidth:20},8:{cellWidth:'auto'}},
-    didParseCell: d => { if (d.section==='body' && d.column.index===7){ const e = l[d.row.index].estado; d.cell.styles.fillColor = rgb(COLOR[e]); d.cell.styles.textColor = rgb(COLOR_T[e]); d.cell.styles.fontStyle='bold'; } },
+    didParseCell: d => {
+      if (d.section !== 'body') return;
+      const m = meta[d.row.index];
+      if (m.tipo === 'cap'){ d.cell.styles.fillColor = [31,78,140]; d.cell.styles.textColor = 255; d.cell.styles.fontStyle = 'bold'; return; }
+      if (m.tipo === 'cat'){ d.cell.styles.fillColor = [231,238,248]; d.cell.styles.textColor = [31,78,140]; d.cell.styles.fontStyle = 'bold'; return; }
+      if (d.column.index === 7){ const e = m.r.estado; d.cell.styles.fillColor = rgb(COLOR[e]); d.cell.styles.textColor = rgb(COLOR_T[e]); d.cell.styles.fontStyle='bold'; }
+    },
     didDrawPage: () => {
       const b = $('barrio').value;
       if (b){ doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(b, W-12, 10, {align:'right'}); }
@@ -1085,6 +1248,11 @@ $('archivo').onchange = e => { cargarArchivos(e.target.files); e.target.value=''
 zona.ondragover = e => { e.preventDefault(); zona.classList.add('encima'); };
 zona.ondragleave = () => zona.classList.remove('encima');
 zona.ondrop = e => { e.preventDefault(); zona.classList.remove('encima'); cargarArchivos(e.dataTransfer.files); };
+$('tPorCat').addEventListener('click', e => {
+  const c = e.target.dataset.vercat; if (c === undefined) return;
+  $('fCat').value = $('fCat').value === c ? '' : c; renderResumen();
+  $('tResumen').scrollIntoView({behavior:'smooth', block:'start'});
+});
 $('tInformes').addEventListener('click', e => {
   const q = e.target.dataset.quitar; if (!q) return;
   S.informes = S.informes.filter(i=>i.id!==q); renderTodo();
@@ -1108,9 +1276,14 @@ $('tResumen').addEventListener('change', e => {
     else S.manual[k] = {estado: t.value === '__ok' ? r.auto : t.value, cuando};
     renderTodo();
   }
+  if (t.dataset.cat !== undefined){
+    const r = RES.find(x => x.k === t.dataset.cat);
+    if (t.value === r.catAuto) delete S.cats[t.dataset.cat]; else S.cats[t.dataset.cat] = t.value;
+    renderTodo(); return;
+  }
   if (t.dataset.nota !== undefined){ S.notas[t.dataset.nota] = t.value.trim(); renderTodo(); }
 });
-['fEstado','fOrigen','fTurno','fVerif','fPendPrimero'].forEach(id => $(id).onchange = renderResumen);
+['fEstado','fOrigen','fTurno','fVerif','fPendPrimero','fAgrupar','fCat'].forEach(id => $(id).onchange = renderResumen);
 $('fTexto').oninput = renderResumen;
 $('bXlsx').onclick = () => descargarXlsx().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el Excel: '+e.message; });
 $('bPdf').onclick = () => descargarPdf().catch(e => { console.error(e); $('msgDesc').textContent = 'Error al generar el PDF: '+e.message; });
